@@ -71,12 +71,13 @@ if ( (param0 == *app_data_p) && get_var_menu_overlay()){ // return from the over
 	// here we perform actions that are necessary if the function is launched for the first time from the menu: filling all data structures, etc.
 	
 	app_data->col=0;
+	app_data->counter=0;
 	
 }
 
 // here we do the interface drawing, there is no need to update (move to video memory) the screen
 
-draw_screen(app_data->col);
+draw_screen(app_data->col, 0);
 
 // if necessary, set the call timer screen_job in ms
 set_update_period(1, 5000);
@@ -99,7 +100,7 @@ struct app_data_ *	app_data = *app_data_p;				//	pointer to screen data
 // rendering the interface, update (transfer to video memory) the screen
 
 app_data->col = (app_data->col+1)%COLORS_COUNT;
-draw_screen(app_data->col);
+draw_screen(app_data->col, app_data->counter);
 
 // transfer screen lines that have been redrawn to video memory
 repaint_screen_lines(0, 176);
@@ -123,9 +124,10 @@ switch (gest->gesture){
 			if ( ( gest->touch_pos_x >66) &&  ( gest->touch_pos_x < 110) ){
 					// touchscreen center
 					// Perform the actions
-					vibrate(1,70,0);
+					//vibrate(1,70,0);
 					app_data->col = (app_data->col+1)%COLORS_COUNT;
-					draw_screen(app_data->col);
+					app_data->counter = (app_data->counter + 5) % (VIDEO_X - 50);
+					draw_screen(app_data->col, app_data->counter);
 					repaint_screen_lines(0, 176);
 					}
 			}
@@ -159,13 +161,17 @@ switch (gest->gesture){
 };
 
 // custom function
-void draw_screen(int col){
+void draw_screen(int col, int counter){
 
 static int colors_bg[COLORS_COUNT] = {COLOR_BLACK, COLOR_BLUE,  COLOR_RED, COLOR_PURPLE};
 static int colors_fg[COLORS_COUNT] = {COLOR_AQUA,  COLOR_WHITE, COLOR_YELLOW, COLOR_GREEN};
 
 set_bg_color(colors_bg[col]);
 fill_screen_bg();
+
+set_fg_color(COLOR_BLACK);
+draw_filled_rect(0 + counter, 0 + counter, 49 + counter, 49+ counter);
+
 set_graph_callback_to_ram_1();
 // load fonts
 load_font();

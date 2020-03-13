@@ -4,7 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/libip"
+                "${workspaceFolder}/libbip"
             ],
             "defines": [
                 "_DEBUG",

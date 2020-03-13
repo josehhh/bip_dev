@@ -15,6 +15,7 @@
 struct app_data_ {
 			void* 	ret_f;					//	the address of the return function
 			int		col;					//	the current color of the font
+			int     counter;               // counter of the square position.
 };
 
 // template.c
@@ -22,5 +23,5 @@ void 	show_screen (void *return_screen);
 void 	key_press_screen();
 int 	dispatch_screen (void *param);
 void 	screen_job();
-void	draw_screen(int col);
+void	draw_screen(int col, int counter);
 #endif
