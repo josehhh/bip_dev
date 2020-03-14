@@ -7,76 +7,76 @@
 #define __CALEND_H__
 
 // Значения цветовой схемы 
-#define CALEND_COLOR_BG					0	//	фон  календаря
-#define CALEND_COLOR_MONTH				1	//	цвет названия текущего месяца
-#define CALEND_COLOR_YEAR				2	//	цвет текущего года
-#define CALEND_COLOR_WORK_NAME			3	//	цвет названий дней будни
-#define CALEND_COLOR_HOLY_NAME_BG		4	// 	фон	 названий дней выходные
-#define CALEND_COLOR_HOLY_NAME_FG		5	//	цвет названий дней выходные
-#define CALEND_COLOR_SEPAR				6	//	цвет разделителей календаря
-#define CALEND_COLOR_NOT_CUR_WORK		7	//	цвет чисел НЕ текущего месяца будни
-#define CALEND_COLOR_NOT_CUR_HOLY_BG	8	//	фон  чисел НЕ текущего месяца выходные
-#define CALEND_COLOR_NOT_CUR_HOLY_FG	9	//	цвет чисел НЕ текущего месяца выходные
-#define CALEND_COLOR_CUR_WORK			10	//	цвет чисел текущего месяца будни
-#define CALEND_COLOR_CUR_HOLY_BG		11	//	фон  чисел текущего месяца выходные
-#define CALEND_COLOR_CUR_HOLY_FG		12	//	цвет чисел текущего месяца выходные
-#define CALEND_COLOR_TODAY_BG			13	//	цвет чисел текущего дня
-#define CALEND_COLOR_TODAY_FG			14	//	фон  чисел текущего дня
+#define CALEND_COLOR_BG 0 // calendar background
+#define CALEND_COLOR_MONTH 1 // current month name color
+#define CALEND_COLOR_YEAR 2 // current year color
+#define CALEND_COLOR_WORK_NAME 3 // color of weekday names
+#define CALEND_COLOR_HOLY_NAME_BG 4 // weekend day name background
+#define CALEND_COLOR_HOLY_NAME_FG 5 // color of the names of the days of the weekend
+#define CALEND_COLOR_SEPAR 6 // color of calendar separators
+#define CALEND_COLOR_NOT_CUR_WORK 7 // the color of the numbers is NOT the current weekday
+#define CALEND_COLOR_NOT_CUR_HOLY_BG 8 // the background of the numbers is NOT the current month, the weekend
+#define CALEND_COLOR_NOT_CUR_HOLY_FG 9 // color of numbers NOT of the current month; weekend
+#define CALEND_COLOR_CUR_WORK 10 // the color of the numbers of the current weekday
+#define CALEND_COLOR_CUR_HOLY_BG 11 // weekend background of the current month
+#define CALEND_COLOR_CUR_HOLY_FG 12 // color of the numbers of the current month weekend
+#define CALEND_COLOR_TODAY_BG 13 // color of the numbers of the current day
+#define CALEND_COLOR_TODAY_FG 14 // background of the numbers of the current day
 
-// количество цыетовых схем
+// number of color schemes
 #define COLOR_SCHEME_COUNT	5
 
-//	смещение адреса для хранения настроек календаря
+// address offset for storing calendar settings
 #define OPT_OFFSET_CALEND_OPT		0
 
 #if FW_VERSION==latin_1_1_5_12 || FW_VERSION==latin_1_1_5_36
-// параметры рисования цифр календаря
-//  строка: от 7 до 169 = 162рх в ширину 7 чисел по 24рх на число 7+(24)*6+22+3
-//  строки: от 57 до 174 = 117рх в высоту 6 строк по 22рх на строку 1+(22)*5+22
+// options for drawing calendar numbers
+// line: from 7 to 169 = 162 px in the width of 7 numbers by 24 px for the number 7+ (24) * 6 + 22 + 3
+// lines: from 57 to 174 = 117px in height 6 lines of 22px per line 1+ (22) * 5 + 22
 
-#define CALEND_Y_BASE		30		//	базовая высота начала отрисовки календаря
-//#define CALEND_NAME_HEIGHT	19		//	высота строки названий дней недели
-//#define CALEND_DAYS_Y_BASE	CALEND_Y_BASE+1+V_MARGIN+CALEND_NAME_HEIGHT+V_MARGIN+1		//	высота базы чисел месяца
-#define WIDTH				24		//	ширина цифр числа
-#define HEIGHT				19		//	высота цифр числа
-#define V_SPACE				0		//	вертикальный отступ между строками чисел
-#define	H_SPACE				0		//	горизонтальный отступ между колонками чисел
-#define H_MARGIN 			4		//	горизонтальный отступ от края экрана
-#define V_MARGIN 			1		//	вертикальный отступ от заголовка (базы)
+#define CALEND_Y_BASE 30 // base height of the start of calendar rendering
+// # define CALEND_NAME_HEIGHT 19 // line height of the names of the days of the week
+// # define CALEND_DAYS_Y_BASE CALEND_Y_BASE + 1 + V_MARGIN + CALEND_NAME_HEIGHT + V_MARGIN + 1 // month base height
+#define WIDTH 24 // number digits width
+#define HEIGHT 19 // digits height of a number
+#define V_SPACE 0 // vertical indent between lines of numbers
+#define H_SPACE 0 // horizontal indent between columns of numbers
+#define H_MARGIN 4 // horizontal indent from the edge of the screen
+#define V_MARGIN 1 // vertical indent from the header (base)
 
 #elif	FW_VERSION==not_latin_1_1_2_05
-// параметры рисования цифр календаря
-//  строка: от 7 до 169 = 162рх в ширину 7 чисел по 24рх на число 7+(24)*6+24+3
-//  строки: от 57 до 174 = 117рх в высоту 6 строк по 22рх на строку 1+(22)*5+20
+// options for drawing calendar numbers
+// line: from 7 to 169 = 162 px in the width of 7 numbers by 24 px for the number 7+ (24) * 6 + 24 + 3
+// lines: from 57 to 174 = 117px in height 6 lines in 22px per line 1+ (22) * 5 + 20
 
-#define CALEND_Y_BASE		25		//	базовая высота начала отрисовки календаря
-//#define CALEND_NAME_HEIGHT	FONT_HEIGHT+2		//	высота строки названий дней недели
-//#define CALEND_DAYS_Y_BASE	CALEND_Y_BASE+1+V_MARGIN+CALEND_NAME_HEIGHT+V_MARGIN+1		//	высота базы чисел месяца 56
-#define WIDTH				24		//	ширина цифр числа
-#define HEIGHT				20		//	высота цифр числа
-#define V_SPACE				0		//	вертикальный отступ между строками чисел
-#define	H_SPACE				0		//	горизонтальный отступ между колонками чисел
-#define H_MARGIN 			4		//	горизонтальный отступ от края экрана
-#define V_MARGIN 			1		//	вертикальный отступ от заголовка (базы)
+#define CALEND_Y_BASE 25 // base height of the start of calendar rendering
+// # define CALEND_NAME_HEIGHT FONT_HEIGHT + 2 // line height of the names of the days of the week
+// # define CALEND_DAYS_Y_BASE CALEND_Y_BASE + 1 + V_MARGIN + CALEND_NAME_HEIGHT + V_MARGIN + 1 // month base height is 56
+#define WIDTH 24 // number digits width
+#define HEIGHT 20 // digits height of a number
+#define V_SPACE 0 // vertical indent between lines of numbers
+#define H_SPACE 0 // horizontal indent between columns of numbers
+#define H_MARGIN 4 // horizontal indent from the edge of the screen
+#define V_MARGIN 1 // vertical indent from the header (base)
 #endif
 
 
-#define INACTIVITY_PERIOD		30000		//	время по прошествии которого выходим
+#define INACTIVITY_PERIOD		30000		//	time after which we leave
 
-// сохраняемые опции календаря
+// stored calendar options
 struct calend_opt_ {
-		unsigned char	color_scheme;	//	цветовая схема
+		unsigned char	color_scheme;	//	color scheme
 };
 
-// текущие данные просматриваемого/редактируемого календаря
+// current data of the viewed / edited calendar
 struct calend_ {
-	Elf_proc_* 	proc;				//	указатель на данные запущенного процесса
-		void* 	ret_f;				//	адрес функции возврата
-unsigned char	color_scheme;		//	цветовая схема
-									//	отображаемый месяц
-unsigned int 	day;				//	день
-unsigned int 	month;				//	месяц
-unsigned int 	year;				//	год
+	Elf_proc_* 	proc;				//	pointer to the data of the running process
+		void* 	ret_f;				//	return function address
+unsigned char	color_scheme;		//	color scheme
+									//	displayed month
+unsigned int 	day;				//	day
+unsigned int 	month;				//	month
+unsigned int 	year;				//	year
 };
 
 

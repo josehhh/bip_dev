@@ -1,18 +1,18 @@
 /*
-	(С) Волков Максим 2019 ( Maxim.N.Volkov@ya.ru )
-	
-	Календарь v1.0  
-	Приложение простого календаря.
-	Алгоритм вычисления дня недели работает для любой даты григорианского календаря позднее 1583 года. 
-	Григорианский календарь начал действовать в 1582 — после 4 октября сразу настало 15 октября. 
-	
-	Календарь от 1600 до 3000 года
-	Функции перелистывания каленаря вверх-вниз - месяц, стрелками год
-	При нажатии на название месяца устанавливается текущая дата
-	
-	
-	v.1.1
-	- исправлены переходы в при запуске из бстрого меню
+(C) Volkov Maxim 2019 (Maxim.N.Volkov@ya.ru)
+
+Calendar v1.0
+Simple calendar app.
+The day of the week calculation algorithm works for any date of the Gregorian calendar later than 1583.
+The Gregorian calendar began to operate in 1582 - after October 4, it immediately arrived on October 15.
+
+Calendar 1600 to 3000
+Functions of turning the calendar up and down - month, year arrows
+By clicking on the name of the month, the current date is set.
+
+
+v.1.1
+- fixed transitions at startup from the quick menu
 	
 */
 
@@ -20,7 +20,7 @@
 #include "calend.h"
 #define DEBUG_LOG
 
-//	структура меню экрана календаря
+//	calendar screen menu structure
 struct regmenu_ menu_calend_screen = {
 						55,
 						1,
@@ -34,60 +34,61 @@ struct regmenu_ menu_calend_screen = {
 						0
 					};
 
-int main(int param0, char** argv){	//	переменная argv не определена
+int main(int param0, char** argv){	//argv variable not defined
 	show_calend_screen((void*) param0);
 }
 
 void show_calend_screen (void *param0){
-struct calend_** 	calend_p = get_ptr_temp_buf_2(); 	//	указатель на указатель на данные экрана 
-struct calend_ *	calend;								//	указатель на данные экрана
-struct calend_opt_ 	calend_opt;							//	опции календаря
+struct calend_** 	calend_p = get_ptr_temp_buf_2(); 	//	pointer to screen data pointer 
+struct calend_ *	calend;								//	pointer to screen data
+struct calend_opt_ 	calend_opt;							//	calendar options
+
 
 #ifdef DEBUG_LOG
 log_printf(5, "[show_calend_screen] param0=%X; *temp_buf_2=%X; menu_overlay=%d", (int)param0, (int*)get_ptr_temp_buf_2(), get_var_menu_overlay());
 log_printf(5, " #calend_p=%X; *calend_p=%X", (int)calend_p, (int)*calend_p);
 #endif
 
-if ( (param0 == *calend_p) && get_var_menu_overlay()){ // возврат из оверлейного экрана (входящий звонок, уведомление, будильник, цель и т.д.)
+if ( (param0 == *calend_p) && get_var_menu_overlay()){ // return from the overlay screen (incoming call, notification, alarm, target, etc.)
 
 #ifdef DEBUG_LOG
 	log_printf(5, "  #from overlay");
 	log_printf(5, "\r\n");
 #endif	
 
-	calend = *calend_p;						//	указатель на данные необходимо сохранить для исключения 
-											//	высвобождения памяти функцией reg_menu
-	*calend_p = NULL;						//	обнуляем указатель для передачи в функцию reg_menu	
+	calend = *calend_p;						//	 pointer to data must be saved for exception
+											//	memory release function reg_menu
+	*calend_p = NULL;						//	nullify the pointer to pass to the reg_menu function	
 
-	// 	создаем новый экран, при этом указатели temp_buf_1 и temp_buf_2 были равны 0 и память не была высвобождена	
+	// 	create a new screen, while the pointers temp_buf_1 and temp_buf_2 were 0 and the memory was not freed
 	reg_menu(&menu_calend_screen, 0); 		// 	menu_overlay=0
 	
-	*calend_p = calend;						//	восстанавливаем указатель на данные после функции reg_menu
+	*calend_p = calend;						//	we restore the pointer to the data after the reg_menu function
 	
 	draw_month(0, calend->month, calend->year);
 	
-} else { 			// если запуск функции произошел из меню, 
+} else { 			// if the function started from the menu,
 
 #ifdef DEBUG_LOG
 	log_printf(5, "  #from menu");
 	log_printf(5, "\r\n");
 #endif
-	// создаем экран
+	// create a screen
 	reg_menu(&menu_calend_screen, 0);
 
-	// выделяем необходимую память и размещаем в ней данные
+	// allocate the necessary memory and place data in it
 	*calend_p = (struct calend_ *)pvPortMalloc(sizeof(struct calend_));
-	calend = *calend_p;		//	указатель на данные
+	calend = *calend_p;		//	data pointer
 	
-	// очистим память под данные
+	// clear memory for data
 	_memclr(calend, sizeof(struct calend_));
 	
 	calend->proc = param0;
 	
-	// запомним адрес указателя на функцию в которую необходимо вернуться после завершения данного экрана
-	if ( param0 && calend->proc->elf_finish ) 			//	если указатель на возврат передан, то возвоащаемся на него
+	// remember the address of the pointer to the function you need to return to after finishing this screen
+	if ( param0 && calend->proc->elf_finish ) 			//	if the return pointer is passed, then return to it
 		calend->ret_f = calend->proc->elf_finish;
-	else					//	если нет, то на циферблат
+	else					//	if not, then on the dial
 		calend->ret_f = show_watchface;
 	
 	struct datetime_ datetime;
@@ -100,8 +101,8 @@ if ( (param0 == *calend_p) && get_var_menu_overlay()){ // возврат из о
 	calend->month 	= datetime.month;
 	calend->year 	= datetime.year;
 
-	// считаем опции из flash памяти, если значение в флэш-памяти некорректное то берем первую схему
-	// текущая цветовая схема хранится о смещению 0
+// we consider options from flash memory, if the value in flash memory is incorrect then we take the first scheme
+// current color scheme is stored about offset 0
 	ElfReadSettings(calend->proc->index_listed, &calend_opt, OPT_OFFSET_CALEND_OPT, sizeof(struct calend_opt_));
 	
 	if (calend_opt.color_scheme < COLOR_SCHEME_COUNT) 
@@ -112,11 +113,11 @@ if ( (param0 == *calend_p) && get_var_menu_overlay()){ // возврат из о
 	draw_month(calend->day, calend->month, calend->year);
 }
 
-// при бездействии погасить подсветку и не выходить
+// when idle, turn off the backlight and do not exit
 set_display_state_value(8, 1);
 set_display_state_value(2, 1);
 
-// таймер на job на 20с где выход.
+// timer on job for 20s where is the output.
 set_update_period(1, INACTIVITY_PERIOD);
 
 }
@@ -127,44 +128,44 @@ struct calend_ *	calend = *calend_p;						//	указатель на данны�
 
 
 /*
- 0:	CALEND_COLOR_BG					фон календаря
- 1:	CALEND_COLOR_MONTH				цвет названия текущего месяца
- 2:	CALEND_COLOR_YEAR				цвет текущего года
- 3:	CALEND_COLOR_WORK_NAME			цвет названий дней будни
- 4: CALEND_COLOR_HOLY_NAME_BG		фон	 названий дней выходные
- 5:	CALEND_COLOR_HOLY_NAME_FG		цвет названий дней выходные
- 6:	CALEND_COLOR_SEPAR				цвет разделителей календаря
- 7:	CALEND_COLOR_NOT_CUR_WORK		цвет чисел НЕ текущего месяца будни
- 8:	CALEND_COLOR_NOT_CUR_HOLY_BG	фон  чисел НЕ текущего месяца выходные
- 9:	CALEND_COLOR_NOT_CUR_HOLY_FG	цвет чисел НЕ текущего месяца выходные
-10:	CALEND_COLOR_CUR_WORK			цвет чисел текущего месяца будни
-11:	CALEND_COLOR_CUR_HOLY_BG		фон  чисел текущего месяца выходные
-12:	CALEND_COLOR_CUR_HOLY_FG		цвет чисел текущего месяца выходные
-13: CALEND_COLOR_TODAY_BG			фон  чисел текущего дня; 		bit 31 - заливка: =0 заливка цветом фона, =1 только рамка, фон как у числа не текущего месяца 
-14: CALEND_COLOR_TODAY_FG			цвет чисел текущего дня
+ 0: CALEND_COLOR_BG calendar background
+ 1: CALEND_COLOR_MONTH current month name color
+ 2: CALEND_COLOR_YEAR current year color
+ 3: CALEND_COLOR_WORK_NAME weekday color names
+ 4: CALEND_COLOR_HOLY_NAME_BG weekend day names background
+ 5: CALEND_COLOR_HOLY_NAME_FG weekend name color
+ 6: CALEND_COLOR_SEPAR calendar separator color
+ 7: CALEND_COLOR_NOT_CUR_WORK color of numbers NOT the current weekday
+ 8: CALEND_COLOR_NOT_CUR_HOLY_BG the background of numbers NOT the current month weekend
+ 9: CALEND_COLOR_NOT_CUR_HOLY_FG the color of the numbers NOT the current month weekend
+10: CALEND_COLOR_CUR_WORK the color of the numbers of the current month of the week
+11: CALEND_COLOR_CUR_HOLY_BG the background of the current month
+12: CALEND_COLOR_CUR_HOLY_FG the color of the numbers of the current month weekend
+13: CALEND_COLOR_TODAY_BG the background of the numbers of the current day; bit 31 - fill: = 0 fill with the background color, = 1 only the frame, the background is like the date of a non-current month
+14: CALEND_COLOR_TODAY_FG the color of the numbers of the current day
 */
 
 
 static unsigned char short_color_scheme[COLOR_SCHEME_COUNT][15] = 	
-/* черная тема без выделения выходных*/		{//		0				1			2			3			4			5			6
+/* black theme without highlighting the weekend */		{//		0				1			2			3			4			5			6
 											 {COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
 											 COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_YELLOW, COLOR_SH_BLACK}, 
 											 //		7				8			9			10			11			12			13			14 
 											 //		0				1			2			3			4			5			6
-/* белая тема без выделения выходных*/		{COLOR_SH_WHITE, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_BLACK, 
+/* white theme without highlighting the weekend */		{COLOR_SH_WHITE, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_BLACK, 
 											 COLOR_SH_BLUE, COLOR_SH_WHITE, COLOR_SH_AQUA, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_BLUE, COLOR_SH_WHITE},
 											 //		7				8			9			10			11			12			13			14 	 
 											 //		0				1			2			3			4			5			6
-/* черная тема с выделением выходных*/		{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
+/* black weekend theme */					{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
 											 COLOR_SH_GREEN, COLOR_SH_RED, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_AQUA, COLOR_SH_BLACK}, 
 											 //		7				8			9			10			11			12 			13			14 
 											 //		0				1			2			3			4			5			6
-/* белая тема с выделением выходных*/		{COLOR_SH_WHITE, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_BLACK, 
+/* white theme with weekend highlight*/		{COLOR_SH_WHITE, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_BLACK, 
 											 COLOR_SH_BLUE, COLOR_SH_RED, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_WHITE},
 											 //		7				8			9			10			11			12			13			14 	 
 											//		0				1			2			3			4			5			6
-/* черная тема без выделения выходных*/		{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
-/*с рамкой выделения сегодняшнего дня*/	     COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_AQUA|(1<<7), COLOR_SH_BLACK},
+/* black theme without highlighting the weekend*/		{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
+/*with today's highlight frame*/	     COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_AQUA|(1<<7), COLOR_SH_BLACK},
 											 //		7				8			9			10			11			12			13			14 	 
 											
 											};
@@ -264,53 +265,53 @@ switch (get_selected_locale()){
 
 _memclr(&text_buffer, 24);
 
-set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_BG]);	//	фон календаря
+set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_BG]);	//	calendar background
 fill_screen_bg();
 
 set_graph_callback_to_ram_1();
-load_font(); // подгружаем шрифты
+load_font(); // load fonts
 
 _sprintf(&text_buffer[0], " %d", year);
 int month_text_width = text_width(monthname[month]);
 int year_text_width  = text_width(&text_buffer[0]);
 
-set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_MONTH]);		//	цвет месяца
-text_out(monthname[month], (176-month_text_width-year_text_width)/2 ,5); 	// 	вывод названия месяца
+set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_MONTH]);		//	color of the month
+text_out(monthname[month], (176-month_text_width-year_text_width)/2 ,5); 	// 	display the name of the month
 
-set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_YEAR]);		//	цвет года
-text_out(&text_buffer[0],  (176+month_text_width-year_text_width)/2 ,5); 	// 	вывод года
+set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_YEAR]);		//	color of the year
+text_out(&text_buffer[0],  (176+month_text_width-year_text_width)/2 ,5); 	// 	conclusion of the year
 
-text_out("←", 5		 ,5); 		// вывод стрелки влево
-text_out("→", 176-5-text_width("→"),5); 		// вывод стрелки вправо
+text_out("←", 5		 ,5); 		// left arrow output
+text_out("→", 176-5-text_width("→"),5); 		// right arrow output
 
 int calend_name_height = get_text_height();
 
 set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_SEPAR]);
-draw_horizontal_line(CALEND_Y_BASE, H_MARGIN, 176-H_MARGIN);	// Верхний разделитель названий дней недели
-draw_horizontal_line(CALEND_Y_BASE+1+V_MARGIN+calend_name_height+1+V_MARGIN, H_MARGIN, 176-H_MARGIN);	// Нижний  разделитель названий дней недели
-//draw_horizontal_line(175, H_MARGIN, 176-H_MARGIN);	// Нижний  разделитель месяца
+draw_horizontal_line(CALEND_Y_BASE, H_MARGIN, 176-H_MARGIN);	// Upper weekday separator
+draw_horizontal_line(CALEND_Y_BASE+1+V_MARGIN+calend_name_height+1+V_MARGIN, H_MARGIN, 176-H_MARGIN);	// Bottom day separator
+//draw_horizontal_line(175, H_MARGIN, 176-H_MARGIN);	// Bottom month separator
  
-// Названия дней недели
+// Names of the days of the week
 for (unsigned i=1; (i<=7);i++){
-	if ( i>5 ){		//	выходные
+	if ( i>5 ){		//	weekends
 		set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_HOLY_NAME_BG]);
 		set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_HOLY_NAME_FG]);
-	} else {		//	рабочие
+	} else {		//	work days
 		set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_BG]);	
 		set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_WORK_NAME]);
 	}
 	
 	
-	// отрисовка фона названий выходных    
+	//  drawing the background of the weekend names
 	int pos_x1 = H_MARGIN +(i-1)*(WIDTH  + H_SPACE);
 	int pos_y1 = CALEND_Y_BASE+V_MARGIN+1;
 	int pos_x2 = pos_x1 + WIDTH;
 	int pos_y2 = pos_y1 + calend_name_height;
 
-	// фон для каждого названия дня недели
+	// background for each day of the week name
 	draw_filled_rect_bg(pos_x1, pos_y1, pos_x2, pos_y2);
 	
-	// вывод названий дней недели. если ширина названия больше чем ширина поля, выводим короткие названия
+	// display the names of the days of the week. if the width of the name is greater than the width of the field, print short names
 	if (text_width(weekday_string[1]) <= (WIDTH - 2))
 		text_out_center(weekday_string[i], pos_x1 + WIDTH/2, pos_y1 + (calend_name_height-get_text_height())/2 );	
 	else 
@@ -329,7 +330,7 @@ if (d>1) {
      d=day_month[m]-d+2;
 	}
 
-// числа месяца
+// day of the month
 for (unsigned i=1; (i<=7*6);i++){
      
 	 unsigned char row = (i-1)/7;
@@ -339,32 +340,32 @@ for (unsigned i=1; (i<=7*6);i++){
 	
 	int bg_color = 0;
 	int fg_color = 0;
-	int frame_color = 0; 	// цветрамки
-	int frame    = 0; 		// 1-рамка; 0 - заливка
+	int frame_color = 0; 	// flowers
+	int frame    = 0; 		// 1-frame; 0 - fill
 	
-	// если текущий день текущего месяца
+	// if the current day of the current month
 	if ( (m==month)&&(d==day) ){
 		
-		if ( color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] & (1<<31) ) {// если заливка отключена  только рамка
+		if ( color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] & (1<<31) ) {// if the fill is disabled only the frame
 			
-			// цвет рамки устанавливаем CALEND_COLOR_TODAY_BG, фон внутри рамки и цвет текста такой же как был
+			// set the border color to CALEND_COLOR_TODAY_BG, the background inside the border and the text color are the same as before
 			frame_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG &COLOR_MASK]);
-			// рисуем рамку
+			// draw a frame
 			frame = 1;
 			
-			if ( col > 5 ){ // если выходные 
+			if ( col > 5 ){ // if weekend
 				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_BG]); 
 				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_FG]);
-			} else {		//	если будни
+			} else {		//	if weekdays
 				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_BG]); 
 				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_WORK]);
 			};
 			
-		} else { 						// если включена заливка	
-			if ( col > 5 ){ // если выходные 
+		} else { 	// if fill is enabled
+			if ( col > 5 ){ // if weekend
 				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] & COLOR_MASK); 
 				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_FG]);
-			} else {		//	если будни
+			} else {		//	if weekdays
 				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] &COLOR_MASK); 
 				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_FG]);
 			};
@@ -372,7 +373,7 @@ for (unsigned i=1; (i<=7*6);i++){
 		
 
 	} else {
-	if ( col > 5 ){  // если выходные 
+	if ( col > 5 ){  // if weekend
 		if (month == m){
 			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_BG]); 
 			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_FG]);
@@ -380,7 +381,7 @@ for (unsigned i=1; (i<=7*6);i++){
 			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_NOT_CUR_HOLY_BG]); 
 			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_NOT_CUR_HOLY_FG]);
 		}
-	} else {		//	если будни
+	} else {		// if weekdays
 		if (month == m){
 			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_BG]); 
 			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_WORK]);
@@ -393,30 +394,30 @@ for (unsigned i=1; (i<=7*6);i++){
 	
 	
 	
-	//  строка: от 7 до 169 = 162рх в ширину 7 чисел по 24рх на число 7+(22+2)*6+22+3
-	//  строки: от 57 до 174 = 117рх в высоту 6 строк по 19рх на строку 1+(17+2)*5+18
+	//  line: from 7 to 169 = 162 px in width 7 numbers by 24 px per number 7+(22+2)*6+22+3
+	//  lines: from 57 to 174 = 117px in height 6 lines at 19px per line 1+(17+2)*5+18
 	
-	// отрисовка фона числа
+	// drawing the number background
 	int pos_x1 = H_MARGIN +(col-1)*(WIDTH  + H_SPACE);
 	int pos_y1 = calend_days_y_base + V_MARGIN + row *(HEIGHT + V_SPACE)+1;
 	int pos_x2 = pos_x1 + WIDTH;
 	int pos_y2 = pos_y1 + HEIGHT;	
 	
 	if (frame){
-		// выводим число
+		// print the number
 		set_bg_color(bg_color);
 		set_fg_color(fg_color);
 		text_out_center(&text_buffer[0], pos_x1+WIDTH/2, pos_y1+(HEIGHT-get_text_height())/2);
 		
-		//	рисуем рамку
+		//	draw a frame
 		set_fg_color(frame_color);
 		draw_rect(pos_x1, pos_y1, pos_x2-1, pos_y2-1);	
 	} else {
-		// рисуем заливку
+		// draw a fill
 		set_bg_color(bg_color);
 		draw_filled_rect_bg(pos_x1, pos_y1, pos_x2, pos_y2);
 		
-		// выводим число
+		// print the number
 		set_fg_color(fg_color);
 		text_out_center(&text_buffer[0], pos_x1+WIDTH/2, pos_y1+(HEIGHT-get_text_height())/2);
 	};
@@ -453,29 +454,29 @@ return result;
 }
 
 void key_press_calend_screen(){
-	struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	указатель на указатель на данные экрана 
-	struct calend_ *	calend = *calend_p;			//	указатель на данные экрана
+	struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	pointer to screen data pointer
+	struct calend_ *	calend = *calend_p;			//	pointer to screen data
 	
 	show_menu_animate(calend->ret_f, (unsigned int)show_calend_screen, ANIMATE_RIGHT);	
 };
 
 
 void calend_screen_job(){
-	struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	указатель на указатель на данные экрана 
-	struct calend_ *	calend = *calend_p;			//	указатель на данные экрана
-	
-	// при достижении таймера обновления выходим
+	struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	pointer to screen data pointer
+	struct calend_ *	calend = *calend_p;			//	pointer to screen data
+
+	// when the update timer is reached, exit
 	show_menu_animate(calend->ret_f, (unsigned int)show_calend_screen, ANIMATE_LEFT);
 }
 
 int dispatch_calend_screen (void *param){
-	struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	указатель на указатель на данные экрана 
-	struct calend_ *	calend = *calend_p;			//	указатель на данные экрана
+	struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	pointer to screen data pointer
+	struct calend_ *	calend = *calend_p;			//	pointer to screen data
 	
-	struct calend_opt_ calend_opt;					//	опции календаря
+	struct calend_opt_ calend_opt;					//	calendar options
 	
 	struct datetime_ datetime;
-	// получим текущую дату
+	// get the current date
 	
 		
 	get_current_date_time(&datetime);
@@ -488,11 +489,11 @@ int dispatch_calend_screen (void *param){
 	switch (gest->gesture){
 		case GESTURE_CLICK: {
 			
-			// вибрация при любом нажатии на экран
+			// vibration with any touch on the screen
 			vibrate (1, 40, 0);
 			
 			
-			if ( gest->touch_pos_y < CALEND_Y_BASE ){ // кликнули по верхней строке
+			if ( gest->touch_pos_y < CALEND_Y_BASE ){ // clicked on the top line
 				if (gest->touch_pos_x < 44){
 					if ( calend->year > 1600 ) calend->year--;
 				} else 
@@ -512,11 +513,11 @@ int dispatch_calend_screen (void *param){
 					draw_month(day, calend->month, calend->year);
 					repaint_screen_lines(1, 176);			
 				
-			} else { // кликнули в календарь
+			} else { // clicked on calendar
 			
 				calend->color_scheme = ((calend->color_scheme+1)%COLOR_SCHEME_COUNT);
 						
-				// сначала обновим экран
+				// first refresh the screen
 				if ( (calend->year == datetime.year) && (calend->month == datetime.month) ){
 					day = datetime.day;
 				 } else {	
@@ -524,60 +525,58 @@ int dispatch_calend_screen (void *param){
 				 }
 					draw_month(day, calend->month, calend->year);
 					repaint_screen_lines(1, 176);			
-					
-				// потом запись опций во flash память, т.к. это долгая операция
-				// TODO: 1. если опций будет больше чем цветовая схема - переделать сохранение, чтобы сохранять перед выходом.
-				calend_opt.color_scheme = calend->color_scheme;	
 
-				// запишем настройки в флэш память
+				// then write options to flash memory, because it's a long operation
+				// TODO: 1. if there are more options than the color scheme - redo the save to save before exiting.					
+				calend_opt.color_scheme = calend->color_scheme;	
+				
+				// write the settings to flash memory
 				ElfWriteSettings(calend->proc->index_listed, &calend_opt, OPT_OFFSET_CALEND_OPT, sizeof(struct calend_opt_));
 			}
 			
-			// продлить таймер выхода при бездействии через INACTIVITY_PERIOD с
+			// extend inactivity exit timer through INACTIVITY_PERIOD with
 			set_update_period(1, INACTIVITY_PERIOD);
 			break;
 		};
 		
-		case GESTURE_SWIPE_RIGHT: 	//	свайп направо
-		case GESTURE_SWIPE_LEFT: {	// справа налево
+		case GESTURE_SWIPE_RIGHT: 	//	swap right
+		case GESTURE_SWIPE_LEFT: {	// from right to left
 	
 			if ( get_left_side_menu_active()){
 					set_update_period(0,0);
 					
 					void* show_f = get_ptr_show_menu_func();
 
-					// запускаем dispatch_left_side_menu с параметром param в результате произойдет запуск соответствующего бокового экрана
-					// при этом произойдет выгрузка данных текущего приложения и его деактивация.
+					// run dispatch_left_side_menu with param parameter as a result, the corresponding side screen will start
+					// this will upload the data of the current application and deactivate it.
 					dispatch_left_side_menu(param);
 										
 					if ( get_ptr_show_menu_func() == show_f ){
-						// если dispatch_left_side_menu отработал безуспешно (листать некуда) то в show_menu_func по прежнему будет 
-						// содержаться наша функция show_calend_screen, тогда просто игнорируем этот жест
+					// if dispatch_left_side_menu worked unsuccessfully (there is nowhere to scroll) then in show_menu_func it will still be
+					// our show_calend_screen function is contained, then just ignore this gesture
 						
-						// продлить таймер выхода при бездействии через INACTIVITY_PERIOD с
+						// extend the inactivity exit timer through INACTIVITY_PERIOD with
 						set_update_period(1, INACTIVITY_PERIOD);
 						return 0;
 					}
 
 										
-					//	если dispatch_left_side_menu отработал, то завершаем наше приложение, т.к. данные экрана уже выгрузились
-					// на этом этапе уже выполняется новый экран (тот куда свайпнули)
-					
+// if dispatch_left_side_menu worked, then we finish our application, because screen data has already been uploaded
+// at this stage, a new screen is already running (the one where you swiped)
 					
 					Elf_proc_* proc = get_proc_by_addr(main);
 					proc->ret_f = NULL;
 					
-					elf_finish(main);	//	выгрузить Elf из памяти
+					elf_finish(main);	//	unload Elf from memory
 					return 0;
-				} else { 			//	если запуск не из быстрого меню, обрабатываем свайпы по отдельности
+				} else { 			//	if the launch is not from the quick menu, we process swipes separately
 					switch (gest->gesture){
-						case GESTURE_SWIPE_RIGHT: {	//	свайп направо
+						case GESTURE_SWIPE_RIGHT: {	//	swap right
 							return show_menu_animate(calend->ret_f, (unsigned int)show_calend_screen, ANIMATE_RIGHT);	
 							break;
 						}
-						case GESTURE_SWIPE_LEFT: {	// справа налево
-							//	действие при запуске из меню и дальнейший свайп влево
-							
+						case GESTURE_SWIPE_LEFT: {	// swipe left
+							// action when starting from the menu and further swipe left
 							
 							break;
 						}
@@ -588,7 +587,7 @@ int dispatch_calend_screen (void *param){
 		};	//	case GESTURE_SWIPE_LEFT:
 		
 		
-		case GESTURE_SWIPE_UP: {	// свайп вверх
+		case GESTURE_SWIPE_UP: {	// swipe up
 			if ( calend->month < 12 ) 
 					calend->month++;
 			else {
@@ -603,11 +602,11 @@ int dispatch_calend_screen (void *param){
 			draw_month(day, calend->month, calend->year);
 			repaint_screen_lines(1, 176);
 			
-			// продлить таймер выхода при бездействии через INACTIVITY_PERIOD с
+			// extend inactivity exit timer through INACTIVITY_PERIOD с
 			set_update_period(1, INACTIVITY_PERIOD);
 			break;
 		};
-		case GESTURE_SWIPE_DOWN: {	// свайп вниз
+		case GESTURE_SWIPE_DOWN: {	// swipe down
 			if ( calend->month > 1 ) 
 					calend->month--;
 			else {
@@ -622,11 +621,11 @@ int dispatch_calend_screen (void *param){
 			draw_month(day, calend->month, calend->year);			
 			repaint_screen_lines(1, 176);
 			
-			// продлить таймер выхода при бездействии через INACTIVITY_PERIOD с
+			// extend inactivity exit timer through INACTIVITY_PERIOD с
 			set_update_period(1, INACTIVITY_PERIOD);
 			break;
 		};		
-		default:{	// что-то пошло не так...
+		default:{	// Something went wrong...
 			break;
 		};		
 		
