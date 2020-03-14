@@ -146,39 +146,19 @@ struct calend_ *	calend = *calend_p;						//	указатель на данны�
 */
 
 
-static unsigned char short_color_scheme[COLOR_SCHEME_COUNT][15] = 	
-/* black theme without highlighting the weekend */		{//		0				1			2			3			4			5			6
-											 {COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
-											 COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_YELLOW, COLOR_SH_BLACK}, 
-											 //		7				8			9			10			11			12			13			14 
-											 //		0				1			2			3			4			5			6
-/* white theme without highlighting the weekend */		{COLOR_SH_WHITE, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_BLACK, 
-											 COLOR_SH_BLUE, COLOR_SH_WHITE, COLOR_SH_AQUA, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_BLUE, COLOR_SH_WHITE},
-											 //		7				8			9			10			11			12			13			14 	 
-											 //		0				1			2			3			4			5			6
-/* black weekend theme */					{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
-											 COLOR_SH_GREEN, COLOR_SH_RED, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_AQUA, COLOR_SH_BLACK}, 
-											 //		7				8			9			10			11			12 			13			14 
-											 //		0				1			2			3			4			5			6
-/* white theme with weekend highlight*/		{COLOR_SH_WHITE, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_BLACK, 
-											 COLOR_SH_BLUE, COLOR_SH_RED, COLOR_SH_BLUE, COLOR_SH_BLACK, COLOR_SH_RED, COLOR_SH_BLACK, COLOR_SH_BLUE, COLOR_SH_WHITE},
-											 //		7				8			9			10			11			12			13			14 	 
-											//		0				1			2			3			4			5			6
-/* black theme without highlighting the weekend*/		{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
-/*with today's highlight frame*/	     COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_AQUA|(1<<7), COLOR_SH_BLACK},
-											 //		7				8			9			10			11			12			13			14 	 
-											
-											};
-
-int color_scheme[COLOR_SCHEME_COUNT][15];
+// black theme without highlighting the weekend with today's highlight frame*/	
+static unsigned char short_color_scheme[15] = 
+	{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
+	COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_AQUA|(1<<7), COLOR_SH_BLACK};
+											 
+int color_scheme[15];
 
 
-for (unsigned char i=0;i<COLOR_SCHEME_COUNT;i++)
-	for (unsigned char j=0;j<15;j++){
-	color_scheme[i][j]  = (((unsigned int)short_color_scheme[i][j]&(unsigned char)COLOR_SH_MASK)&COLOR_SH_RED)  ?COLOR_RED   :0;	//	составляющая красного цвета
-	color_scheme[i][j] |= (((unsigned int)short_color_scheme[i][j]&(unsigned char)COLOR_SH_MASK)&COLOR_SH_GREEN)?COLOR_GREEN :0;	//	составляющая зеленого цвета
-	color_scheme[i][j] |= (((unsigned int)short_color_scheme[i][j]&(unsigned char)COLOR_SH_MASK)&COLOR_SH_BLUE) ?COLOR_BLUE  :0;	//	составляющая синего цвета
-	color_scheme[i][j] |= (((unsigned int)short_color_scheme[i][j]&(unsigned char)(1<<7))) ?(1<<31) :0;				//	для рамки	
+for (unsigned char j=0;j<15;j++){
+color_scheme[j]  = (((unsigned int)short_color_scheme[j]&(unsigned char)COLOR_SH_MASK)&COLOR_SH_RED)  ?COLOR_RED   :0;	//  red component
+color_scheme[j] |= (((unsigned int)short_color_scheme[j]&(unsigned char)COLOR_SH_MASK)&COLOR_SH_GREEN)?COLOR_GREEN :0;	//	green component
+color_scheme[j] |= (((unsigned int)short_color_scheme[j]&(unsigned char)COLOR_SH_MASK)&COLOR_SH_BLUE) ?COLOR_BLUE  :0;	//	blue component
+color_scheme[j] |= (((unsigned int)short_color_scheme[j]&(unsigned char)(1<<7))) ?(1<<31) :0;				//	for the frame
 }
 
 char text_buffer[24];
@@ -265,7 +245,7 @@ switch (get_selected_locale()){
 
 _memclr(&text_buffer, 24);
 
-set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_BG]);	//	calendar background
+set_bg_color(color_scheme[CALEND_COLOR_BG]);	//	calendar background
 fill_screen_bg();
 
 set_graph_callback_to_ram_1();
@@ -275,10 +255,10 @@ _sprintf(&text_buffer[0], " %d", year);
 int month_text_width = text_width(monthname[month]);
 int year_text_width  = text_width(&text_buffer[0]);
 
-set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_MONTH]);		//	color of the month
+set_fg_color(color_scheme[CALEND_COLOR_MONTH]);		//	color of the month
 text_out(monthname[month], (176-month_text_width-year_text_width)/2 ,1); 	// 	display the name of the month
 
-set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_YEAR]);		//	color of the year
+set_fg_color(color_scheme[CALEND_COLOR_YEAR]);		//	color of the year
 text_out(&text_buffer[0],  (176+month_text_width-year_text_width)/2 ,1); 	// 	conclusion of the year
 
 //text_out("←", 5		 ,2); 		// left arrow output
@@ -286,7 +266,7 @@ text_out(&text_buffer[0],  (176+month_text_width-year_text_width)/2 ,1); 	// 	co
 
 int calend_name_height = get_text_height();
 
-set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_SEPAR]);
+set_fg_color(color_scheme[CALEND_COLOR_SEPAR]);
 draw_horizontal_line(CALEND_Y_BASE, H_MARGIN, 176-H_MARGIN);	// Upper weekday separator
 draw_horizontal_line(CALEND_Y_BASE+V_MARGIN+calend_name_height+V_MARGIN, H_MARGIN, 176-H_MARGIN);	// Bottom day separator
 //draw_horizontal_line(175, H_MARGIN, 176-H_MARGIN);	// Bottom month separator
@@ -294,11 +274,11 @@ draw_horizontal_line(CALEND_Y_BASE+V_MARGIN+calend_name_height+V_MARGIN, H_MARGI
 // Names of the days of the week
 for (unsigned i=1; (i<=7);i++){
 	if ( i>5 ){		//	weekends
-		set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_HOLY_NAME_BG]);
-		set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_HOLY_NAME_FG]);
+		set_bg_color(color_scheme[CALEND_COLOR_HOLY_NAME_BG]);
+		set_fg_color(color_scheme[CALEND_COLOR_HOLY_NAME_FG]);
 	} else {		//	work days
-		set_bg_color(color_scheme[calend->color_scheme][CALEND_COLOR_BG]);	
-		set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_WORK_NAME]);
+		set_bg_color(color_scheme[CALEND_COLOR_BG]);	
+		set_fg_color(color_scheme[CALEND_COLOR_WORK_NAME]);
 	}
 	
 	
@@ -346,28 +326,28 @@ for (unsigned i=1; (i<=7*6);i++){
 	// if the current day of the current month
 	if ( (m==month)&&(d==day) ){
 		
-		if ( color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] & (1<<31) ) {// if the fill is disabled only the frame
+		if ( color_scheme[CALEND_COLOR_TODAY_BG] & (1<<31) ) {// if the fill is disabled only the frame
 			
 			// set the border color to CALEND_COLOR_TODAY_BG, the background inside the border and the text color are the same as before
-			frame_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG &COLOR_MASK]);
+			frame_color = (color_scheme[CALEND_COLOR_TODAY_BG &COLOR_MASK]);
 			// draw a frame
 			frame = 1;
 			
 			if ( col > 5 ){ // if weekend
-				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_BG]); 
-				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_FG]);
+				bg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_BG]); 
+				fg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_FG]);
 			} else {		//	if weekdays
-				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_BG]); 
-				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_WORK]);
+				bg_color = (color_scheme[CALEND_COLOR_BG]); 
+				fg_color = (color_scheme[CALEND_COLOR_CUR_WORK]);
 			};
 			
 		} else { 	// if fill is enabled
 			if ( col > 5 ){ // if weekend
-				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] & COLOR_MASK); 
-				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_FG]);
+				bg_color = (color_scheme[CALEND_COLOR_TODAY_BG] & COLOR_MASK); 
+				fg_color = (color_scheme[CALEND_COLOR_TODAY_FG]);
 			} else {		//	if weekdays
-				bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_BG] &COLOR_MASK); 
-				fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_TODAY_FG]);
+				bg_color = (color_scheme[CALEND_COLOR_TODAY_BG] &COLOR_MASK); 
+				fg_color = (color_scheme[CALEND_COLOR_TODAY_FG]);
 			};
 		};
 		
@@ -375,19 +355,19 @@ for (unsigned i=1; (i<=7*6);i++){
 	} else {
 	if ( col > 5 ){  // if weekend
 		if (month == m){
-			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_BG]); 
-			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_HOLY_FG]);
+			bg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_BG]); 
+			fg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_FG]);
 		} else {
-			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_NOT_CUR_HOLY_BG]); 
-			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_NOT_CUR_HOLY_FG]);
+			bg_color = (color_scheme[CALEND_COLOR_NOT_CUR_HOLY_BG]); 
+			fg_color = (color_scheme[CALEND_COLOR_NOT_CUR_HOLY_FG]);
 		}
 	} else {		// if weekdays
 		if (month == m){
-			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_BG]); 
-			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_CUR_WORK]);
+			bg_color = (color_scheme[CALEND_COLOR_BG]); 
+			fg_color = (color_scheme[CALEND_COLOR_CUR_WORK]);
 		} else {
-			bg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_BG]); 
-			fg_color = (color_scheme[calend->color_scheme][CALEND_COLOR_NOT_CUR_WORK]);
+			bg_color = (color_scheme[CALEND_COLOR_BG]); 
+			fg_color = (color_scheme[CALEND_COLOR_NOT_CUR_WORK]);
 		}
 	}
 	}
