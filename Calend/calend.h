@@ -34,7 +34,7 @@
 // line: from 7 to 169 = 162 px in the width of 7 numbers by 24 px for the number 7+ (24) * 6 + 22 + 3
 // lines: from 57 to 174 = 117px in height 6 lines of 22px per line 1+ (22) * 5 + 22
 
-#define CALEND_Y_BASE 30 // base height of the start of calendar rendering
+#define CALEND_Y_BASE 20 // base height of the start of calendar rendering
 // # define CALEND_NAME_HEIGHT 19 // line height of the names of the days of the week
 // # define CALEND_DAYS_Y_BASE CALEND_Y_BASE + 1 + V_MARGIN + CALEND_NAME_HEIGHT + V_MARGIN + 1 // month base height
 #define WIDTH 24 // number digits width

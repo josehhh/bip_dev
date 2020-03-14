@@ -94,7 +94,7 @@ if ( (param0 == *calend_p) && get_var_menu_overlay()){ // return from the overla
 	struct datetime_ datetime;
 	_memclr(&datetime, sizeof(struct datetime_));
 	
-		// получим текущую дату
+	// get the current date
 	get_current_date_time(&datetime);
 	
 	calend->day 	= datetime.day;
@@ -276,19 +276,19 @@ int month_text_width = text_width(monthname[month]);
 int year_text_width  = text_width(&text_buffer[0]);
 
 set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_MONTH]);		//	color of the month
-text_out(monthname[month], (176-month_text_width-year_text_width)/2 ,5); 	// 	display the name of the month
+text_out(monthname[month], (176-month_text_width-year_text_width)/2 ,1); 	// 	display the name of the month
 
 set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_YEAR]);		//	color of the year
-text_out(&text_buffer[0],  (176+month_text_width-year_text_width)/2 ,5); 	// 	conclusion of the year
+text_out(&text_buffer[0],  (176+month_text_width-year_text_width)/2 ,1); 	// 	conclusion of the year
 
-text_out("←", 5		 ,5); 		// left arrow output
-text_out("→", 176-5-text_width("→"),5); 		// right arrow output
+//text_out("←", 5		 ,2); 		// left arrow output
+//text_out("→", 176-5-text_width("→"),2); 		// right arrow output
 
 int calend_name_height = get_text_height();
 
 set_fg_color(color_scheme[calend->color_scheme][CALEND_COLOR_SEPAR]);
 draw_horizontal_line(CALEND_Y_BASE, H_MARGIN, 176-H_MARGIN);	// Upper weekday separator
-draw_horizontal_line(CALEND_Y_BASE+1+V_MARGIN+calend_name_height+1+V_MARGIN, H_MARGIN, 176-H_MARGIN);	// Bottom day separator
+draw_horizontal_line(CALEND_Y_BASE+V_MARGIN+calend_name_height+V_MARGIN, H_MARGIN, 176-H_MARGIN);	// Bottom day separator
 //draw_horizontal_line(175, H_MARGIN, 176-H_MARGIN);	// Bottom month separator
  
 // Names of the days of the week
@@ -309,13 +309,13 @@ for (unsigned i=1; (i<=7);i++){
 	int pos_y2 = pos_y1 + calend_name_height;
 
 	// background for each day of the week name
-	draw_filled_rect_bg(pos_x1, pos_y1, pos_x2, pos_y2);
+	//draw_filled_rect_bg(pos_x1, pos_y1, pos_x2, pos_y2);
 	
 	// display the names of the days of the week. if the width of the name is greater than the width of the field, print short names
-	if (text_width(weekday_string[1]) <= (WIDTH - 2))
+	//if (text_width(weekday_string[1]) <= (WIDTH - 2))
 		text_out_center(weekday_string[i], pos_x1 + WIDTH/2, pos_y1 + (calend_name_height-get_text_height())/2 );	
-	else 
-		text_out_center(weekday_string_short[i], pos_x1 + WIDTH/2, pos_y1 + (calend_name_height-get_text_height())/2 );	
+	//else 
+	//	text_out_center(weekday_string_short[i], pos_x1 + WIDTH/2, pos_y1 + (calend_name_height-get_text_height())/2 );	
 }
 
 
