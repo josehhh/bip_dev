@@ -1,0 +1,6 @@
+Calendar
+RU	Календарь
+IT	Calendario
+ES	Calendario
+FR	Calendrier
+DE	Kalender

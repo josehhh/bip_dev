@@ -91,7 +91,7 @@ if exist name.txt del name.txt
 :done_
 
 @call :echoColor 0A "Done." 1 
-pause
+: : pause
 @goto :EOF
 
 :error

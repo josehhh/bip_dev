@@ -1,2 +1,0 @@
-cd template
-.\build.bat
