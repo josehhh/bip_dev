@@ -127,29 +127,26 @@ struct calend_** 	calend_p = get_ptr_temp_buf_2(); 		//	указатель на 
 struct calend_ *	calend = *calend_p;						//	указатель на данные экрана
 
 
-/*
- 0: CALEND_COLOR_BG calendar background
- 1: CALEND_COLOR_MONTH current month name color
- 2: CALEND_COLOR_YEAR current year color
- 3: CALEND_COLOR_WORK_NAME weekday color names
- 4: CALEND_COLOR_HOLY_NAME_BG weekend day names background
- 5: CALEND_COLOR_HOLY_NAME_FG weekend name color
- 6: CALEND_COLOR_SEPAR calendar separator color
- 7: CALEND_COLOR_NOT_CUR_WORK color of numbers NOT the current weekday
- 8: CALEND_COLOR_NOT_CUR_HOLY_BG the background of numbers NOT the current month weekend
- 9: CALEND_COLOR_NOT_CUR_HOLY_FG the color of the numbers NOT the current month weekend
-10: CALEND_COLOR_CUR_WORK the color of the numbers of the current month of the week
-11: CALEND_COLOR_CUR_HOLY_BG the background of the current month
-12: CALEND_COLOR_CUR_HOLY_FG the color of the numbers of the current month weekend
-13: CALEND_COLOR_TODAY_BG the background of the numbers of the current day; bit 31 - fill: = 0 fill with the background color, = 1 only the frame, the background is like the date of a non-current month
-14: CALEND_COLOR_TODAY_FG the color of the numbers of the current day
-*/
 
 
 // black theme without highlighting the weekend with today's highlight frame*/	
-static unsigned char short_color_scheme[15] = 
-	{COLOR_SH_BLACK, COLOR_SH_YELLOW, COLOR_SH_AQUA, COLOR_SH_WHITE, COLOR_SH_RED, COLOR_SH_WHITE, COLOR_SH_WHITE, 
-	COLOR_SH_GREEN, COLOR_SH_BLACK, COLOR_SH_AQUA, COLOR_SH_YELLOW, COLOR_SH_BLACK, COLOR_SH_WHITE, COLOR_SH_AQUA|(1<<7), COLOR_SH_BLACK};
+static unsigned char short_color_scheme[15] = {
+	COLOR_SH_BLACK,  // 0: CALEND_COLOR_BG calendar background
+	COLOR_SH_WHITE, // 1: CALEND_COLOR_MONTH current month name color
+	COLOR_SH_WHITE,   // 2: CALEND_COLOR_YEAR current year color
+	COLOR_SH_WHITE,  // 3: CALEND_COLOR_WORK_NAME weekday color names
+	COLOR_SH_BLACK,    // 4: CALEND_COLOR_HOLY_NAME_BG weekend day names background
+	COLOR_SH_WHITE,  // 5: CALEND_COLOR_HOLY_NAME_FG weekend name color
+	COLOR_SH_WHITE,  // 6: CALEND_COLOR_SEPAR calendar separator color
+	COLOR_SH_GREEN,  // 7: CALEND_COLOR_NOT_CUR_WORK color of numbers NOT the current weekday
+	COLOR_SH_BLACK,  // 8: CALEND_COLOR_NOT_CUR_HOLY_BG the background of numbers NOT the current month weekend
+	COLOR_SH_GREEN,   // 9: CALEND_COLOR_NOT_CUR_HOLY_FG the color of the numbers NOT the current month weekend
+	COLOR_SH_WHITE, //10: CALEND_COLOR_CUR_WORK the color of the numbers of the current month of the week
+	COLOR_SH_BLACK,  //11: CALEND_COLOR_CUR_HOLY_BG the background of the current month
+	COLOR_SH_WHITE,  //12: CALEND_COLOR_CUR_HOLY_FG the color of the numbers of the current month weekend
+	COLOR_SH_WHITE|(1<<7), //13: CALEND_COLOR_TODAY_BG the background of the numbers of the current day; bit 31 - fill: = 0 fill with the background color, = 1 only the frame, the background is like the date of a non-current month
+	COLOR_SH_WHITE   //14: CALEND_COLOR_TODAY_FG the color of the numbers of the current day
+	};
 											 
 int color_scheme[15];
 
