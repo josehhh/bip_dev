@@ -34,11 +34,11 @@
 // line: from 7 to 169 = 162 px in the width of 7 numbers by 24 px for the number 7+ (24) * 6 + 22 + 3
 // lines: from 57 to 174 = 117px in height 6 lines of 22px per line 1+ (22) * 5 + 22
 
-#define CALEND_Y_BASE 20 // base height of the start of calendar rendering
+#define CALEND_Y_BASE 18 // base height of the start of calendar rendering
 // # define CALEND_NAME_HEIGHT 19 // line height of the names of the days of the week
 // # define CALEND_DAYS_Y_BASE CALEND_Y_BASE + 1 + V_MARGIN + CALEND_NAME_HEIGHT + V_MARGIN + 1 // month base height
 #define WIDTH 24 // number digits width
-#define HEIGHT 19 // digits height of a number
+#define HEIGHT 23 // digits height of a number
 #define V_SPACE 0 // vertical indent between lines of numbers
 #define H_SPACE 0 // horizontal indent between columns of numbers
 #define H_MARGIN 4 // horizontal indent from the edge of the screen
@@ -49,11 +49,11 @@
 // line: from 7 to 169 = 162 px in the width of 7 numbers by 24 px for the number 7+ (24) * 6 + 24 + 3
 // lines: from 57 to 174 = 117px in height 6 lines in 22px per line 1+ (22) * 5 + 20
 
-#define CALEND_Y_BASE 25 // base height of the start of calendar rendering
+#define CALEND_Y_BASE 18 // base height of the start of calendar rendering
 // # define CALEND_NAME_HEIGHT FONT_HEIGHT + 2 // line height of the names of the days of the week
 // # define CALEND_DAYS_Y_BASE CALEND_Y_BASE + 1 + V_MARGIN + CALEND_NAME_HEIGHT + V_MARGIN + 1 // month base height is 56
 #define WIDTH 24 // number digits width
-#define HEIGHT 20 // digits height of a number
+#define HEIGHT 23 // digits height of a number
 #define V_SPACE 0 // vertical indent between lines of numbers
 #define H_SPACE 0 // horizontal indent between columns of numbers
 #define H_MARGIN 4 // horizontal indent from the edge of the screen
