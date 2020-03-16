@@ -419,10 +419,10 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		{ // TODO make a function out of this
 			// with frame
 
-			pos_x1_frame = H_MARGIN + (col - 1) * (WIDTH + H_SPACE);
-			pos_y1_frame = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 9;
-			pos_x2_frame = pos_x1_frame + WIDTH;
-			pos_y2_frame = pos_y1_frame + HEIGHT;
+			pos_x1_frame = H_MARGIN + (col - 1) * (WIDTH + H_SPACE) - 1;
+			pos_y1_frame = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 7;
+			pos_x2_frame = pos_x1_frame + WIDTH -1;
+			pos_y2_frame = pos_y1_frame + HEIGHT + 3;
 
 
 		};
@@ -443,7 +443,7 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	draw_horizontal_line(CALEND_Y_BASE + calend_name_height - 2, H_MARGIN, 176 - H_MARGIN); // Bottom day separator
 	set_bg_color(color_scheme[CALEND_COLOR_BG]);
 	set_fg_color(color_scheme[CALEND_COLOR_SEPAR]);
-	draw_rect(pos_x1_frame - 1, pos_y1_frame, pos_x2_frame - 1, pos_y2_frame + 1);
+	draw_rect(pos_x1_frame, pos_y1_frame, pos_x2_frame, pos_y2_frame); // add today frame
 };
 
 unsigned char wday(unsigned int day, unsigned int month, unsigned int year)
