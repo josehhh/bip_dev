@@ -420,9 +420,9 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 			// with frame
 
 			pos_x1_frame = H_MARGIN + (col - 1) * (WIDTH + H_SPACE) - 1;
-			pos_y1_frame = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 7;
+			pos_y1_frame = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 6;
 			pos_x2_frame = pos_x1_frame + WIDTH -1;
-			pos_y2_frame = pos_y1_frame + HEIGHT + 3;
+			pos_y2_frame = pos_y1_frame + HEIGHT + 1;
 
 
 		};

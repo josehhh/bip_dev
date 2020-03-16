@@ -61,7 +61,7 @@
 #endif
 
 
-#define INACTIVITY_PERIOD		30000		//	time after which we leave
+#define INACTIVITY_PERIOD		300000		//	time after which we leave
 
 // stored calendar options
 struct calend_opt_ {
