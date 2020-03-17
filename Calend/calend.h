@@ -105,5 +105,7 @@ void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned i
 void _debug_print();
 void _strcat(char * destination, const char * source );
 void draw_all_events(unsigned int month, unsigned int year);
+void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int year, int* pos_x, int* pos_y);
+
 
 #endif

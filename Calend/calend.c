@@ -130,6 +130,8 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	struct calend_ **calend_p = get_ptr_temp_buf_2(); //	указатель на указатель на данные экрана
 	struct calend_ *calend = *calend_p;				  //	указатель на данные экрана
 
+#pragma region colors
+
 	// black theme without highlighting the weekend with today's highlight frame*/
 	static unsigned char short_color_scheme[15] = {
 		COLOR_SH_BLACK,			   // 0: CALEND_COLOR_BG calendar background
@@ -158,7 +160,9 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		color_scheme[j] |= (((unsigned int)short_color_scheme[j] & (unsigned char)COLOR_SH_MASK) & COLOR_SH_BLUE) ? COLOR_BLUE : 0;   //	blue component
 		color_scheme[j] |= (((unsigned int)short_color_scheme[j] & (unsigned char)(1 << 7))) ? (1 << 31) : 0;						  //	for the frame
 	}
+#pragma endregion
 
+#pragma region text_region
 	char text_buffer[24];
 	char *weekday_string_ru[] = {"??", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"};
 	char *weekday_string_en[] = {"??", "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
@@ -200,8 +204,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		"Enero", "Febrero", "Marzo", "Abril",
 		"Mayo", "Junio", "Julio", "Agosto",
 		"Septiembre", "Octubre", "Noviembre", "Diciembre"};
-
-	unsigned char day_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 	char **weekday_string;
 	char **weekday_string_short;
@@ -246,6 +248,10 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	}
 	}
 
+#pragma endregion
+
+	unsigned char day_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
 	_memclr(&text_buffer, 24);
 
 	set_bg_color(color_scheme[CALEND_COLOR_BG]); //	calendar background
@@ -262,7 +268,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	int pos_y1_frame = 0;
 	int pos_x2_frame = 0;
 	int pos_y2_frame = 0;
-
 
 	set_fg_color(color_scheme[CALEND_COLOR_MONTH]);								   //	color of the month
 	text_out(monthname[month], (176 - month_text_width - year_text_width) / 2, 0); // 	display the name of the month
@@ -294,7 +299,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		//  drawing the background of the weekend names
 		int pos_x1 = H_MARGIN + (i - 1) * (WIDTH + H_SPACE);
 		int pos_y1 = CALEND_Y_BASE + V_MARGIN - 2;
-
 
 		// background for each day of the week name
 		//draw_filled_rect_bg(pos_x1, pos_y1, pos_x2, pos_y2);
@@ -332,7 +336,7 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 
 		int bg_color = 0;
 		int fg_color = 0;
-		int frame = 0;		 // 1-frame; 0 - fill
+		int frame = 0; // 1-frame; 0 - fill
 
 		// if the current day of the current month
 		if ((m == month) && (d == day))
@@ -406,7 +410,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		int pos_x1 = H_MARGIN + (col - 1) * (WIDTH + H_SPACE);
 		int pos_y1 = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 9;
 
-
 		set_bg_color(bg_color);
 		set_fg_color(fg_color);
 
@@ -418,10 +421,8 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 
 			pos_x1_frame = H_MARGIN + (col - 1) * (WIDTH + H_SPACE) - 1;
 			pos_y1_frame = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 6;
-			pos_x2_frame = pos_x1_frame + WIDTH -1;
+			pos_x2_frame = pos_x1_frame + WIDTH - 1;
 			pos_y2_frame = pos_y1_frame + HEIGHT + 1;
-
-
 		};
 
 		if (d < day_month[m])
@@ -671,64 +672,58 @@ int dispatch_calend_screen(void *param)
 	return result;
 };
 
-
-struct datetime_ from_unix_time_to_datetime_(int unix_time){
-
+struct datetime_ from_unix_time_to_datetime_(int unix_time)
+{
 
 	struct datetime_ res;
 
 	uint32_t t = unix_time + 37;
 
 	//Retrieve hours, minutes and seconds
-    res.sec = t % 60;
-    t /= 60;
-    res.min = t % 60;
-    t /= 60;
-    res.hour = t % 24;
-    t /= 24;
+	res.sec = t % 60;
+	t /= 60;
+	res.min = t % 60;
+	t /= 60;
+	res.hour = t % 24;
+	t /= 24;
 
 	uint32_t a;
-    uint32_t b;
-    uint32_t c;
-    uint32_t d;
-    uint32_t e;
-    uint32_t f;
-  
-    //Negative Unix time values are not supported
-    if(t < 1)
-       t = 0;
-  
+	uint32_t b;
+	uint32_t c;
+	uint32_t d;
+	uint32_t e;
+	uint32_t f;
 
-  
-    
-  
-    //Convert Unix time to date
-    a = (uint32_t) ((4 * t + 102032) / 146097 + 15);
-    b = (uint32_t) (t + 2442113 + a - (a / 4));
-    c = (20 * b - 2442) / 7305;
-    d = b - 365 * c - (c / 4);
-    e = d * 1000 / 30601;
-    f = d - e * 30 - e * 601 / 1000;
-  
-    //January and February are counted as months 13 and 14 of the previous year
-    if(e <= 13)
-    {
-       c -= 4716;
-       e -= 1;
-    }
-    else
-    {
-       c -= 4715;
-       e -= 13;
-    }
-  
-    //Retrieve year, month and day
-    res.year = c;
-    res.month = e;
-    res.day = f;
+	//Negative Unix time values are not supported
+	if (t < 1)
+		t = 0;
+
+	//Convert Unix time to date
+	a = (uint32_t)((4 * t + 102032) / 146097 + 15);
+	b = (uint32_t)(t + 2442113 + a - (a / 4));
+	c = (20 * b - 2442) / 7305;
+	d = b - 365 * c - (c / 4);
+	e = d * 1000 / 30601;
+	f = d - e * 30 - e * 601 / 1000;
+
+	//January and February are counted as months 13 and 14 of the previous year
+	if (e <= 13)
+	{
+		c -= 4716;
+		e -= 1;
+	}
+	else
+	{
+		c -= 4715;
+		e -= 13;
+	}
+
+	//Retrieve year, month and day
+	res.year = c;
+	res.month = e;
+	res.day = f;
 
 	return res;
-
 
 	// char buf[180];
 	// char tmp_buf[30];
@@ -752,41 +747,37 @@ struct datetime_ from_unix_time_to_datetime_(int unix_time){
 	// _strcpy(debug_chars, buf);
 
 	// _debug_print();
-
 }
 
-
-void _debug_print(char * str){
+void _debug_print(char *str)
+{
 	repaint_screen_lines(1, 176);
 	set_bg_color(COLOR_BLACK);
 	set_fg_color(COLOR_WHITE);
-	draw_filled_rect_bg(10,10,160,160);
+	draw_filled_rect_bg(10, 10, 160, 160);
 	text_out_center(str, 75, 75);
 	repaint_screen_lines(1, 176);
 }
 
-
-  
-void _strcat(char * destination, const char * source ){
+void _strcat(char *destination, const char *source)
+{
 	int len_dest = _strlen(destination);
 	_strcpy(destination + len_dest, source);
 }
 
-
 // djb2: http://www.cse.yorku.ca/~oz/hash.html
 int hash(const char *str)
-{	
+{
 	int hash = 5381;
 	int c;
 	while (c = *str++)
-		hash = ((hash << 5) + hash) + c; 
+		hash = ((hash << 5) + hash) + c;
 	return hash;
 }
 
-struct event_ create_event(int unix_time_start, int unix_time_end, char* event_name,  char* event_type)
+struct event_ create_event(int unix_time_start, int unix_time_end, char *event_name, char *event_type)
 {
 	struct event_ res;
-	
 
 	int colors[7] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_AQUA, COLOR_PURPLE, COLOR_WHITE};
 	int color = colors[hash(event_type) % 7];
@@ -804,16 +795,74 @@ void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned i
 {
 	if (ev.start.month == month && ev.start.year == year)
 	{
-		_debug_print("draw_event_ correct");
+		int pos_x = -1;
+		int pos_y = -1;
+		get_pos_day_in_monthly(ev.start.day, ev.start.month, ev.start.year, &pos_x, &pos_y);
+
+		set_bg_color(ev.color);
+		pos_y += get_text_height() + 2;
+		draw_filled_rect_bg(pos_x, pos_y, pos_x + 5, pos_y + 5);
+		set_bg_color(COLOR_BLACK);
 	}
 	else
 	{
-		_debug_print("error in draw_event_");
+		return;
+	}
+}
+
+void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int year, int *pos_x, int *pos_y)
+{
+	unsigned char day_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	if (isLeapYear(year) > 0)
+	{
+		day_month[2] = 29;
+	}
+	int calend_days_y_base = CALEND_Y_BASE + 1 + V_MARGIN + get_text_height() + V_MARGIN + 1;
+	unsigned char d = wday(1, month, year);
+	unsigned char m = month;
+	if (d > 1)
+	{
+		m = (month == 1) ? 12 : month - 1;
+		d = day_month[m] - d + 2;
+	}
+
+	// char deb_chars[40];
+	// char deb_chars_tmp[40];
+	// _sprintf(deb_chars, "%0.3d", d);
+	// _sprintf(deb_chars_tmp, "%0.3d", m);
+	// _strcat(deb_chars, " :d - m: ");
+	// _strcat(deb_chars, deb_chars_tmp);
+	// _debug_print(deb_chars);
+
+	// day of the month
+	for (unsigned i = 1; (i <= 7 * 6); i++)
+	{
+		unsigned char row = (i - 1) / 7;
+		unsigned char col = (i - 1) % 7 + 1;
+
+		// if the current day of the current month
+		#define X_CENTERING_OFFSET (WIDTH / 2 - 4)
+		#define Y_CENTERING_OFFSET - 3
+		if ((m == month) && (d == day))
+		{
+			*pos_x = H_MARGIN + (col - 1) * (WIDTH + H_SPACE) + X_CENTERING_OFFSET;
+			*pos_y = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 9 + Y_CENTERING_OFFSET;
+			return;
+		}
+		if (d < day_month[m])
+		{
+			d++;
+		}
+		else
+		{
+			d = 1;
+			m = (m == 12) ? 1 : (m + 1);
+		}
 	}
 }
 
 void draw_all_events(unsigned int month, unsigned int year)
 {
-	struct event_ dummy_event = create_event(1584396145, 1584399745, "yada", "work");
+	struct event_ dummy_event = create_event(1584442731, 1584444731, "yada", "work");
 	draw_event_in_monthly_view(dummy_event, month, year);
 }
