@@ -18,6 +18,8 @@ v.1.1
 
 #include <libbip.h>
 #include "calend.h"
+#include <time.h>
+
 #define DEBUG_LOG
 
 //	calendar screen menu structure
@@ -256,10 +258,10 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	int month_text_width = text_width(monthname[month]);
 	int year_text_width = text_width(&text_buffer[0]);
 
-	int pos_x1_frame;
-	int pos_y1_frame;
-	int pos_x2_frame;
-	int pos_y2_frame;
+	int pos_x1_frame = 0;
+	int pos_y1_frame = 0;
+	int pos_x2_frame = 0;
+	int pos_y2_frame = 0;
 
 
 	set_fg_color(color_scheme[CALEND_COLOR_MONTH]);								   //	color of the month
@@ -292,8 +294,7 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		//  drawing the background of the weekend names
 		int pos_x1 = H_MARGIN + (i - 1) * (WIDTH + H_SPACE);
 		int pos_y1 = CALEND_Y_BASE + V_MARGIN - 2;
-		int pos_x2 = pos_x1 + WIDTH;
-		int pos_y2 = pos_y1 + calend_name_height;
+
 
 		// background for each day of the week name
 		//draw_filled_rect_bg(pos_x1, pos_y1, pos_x2, pos_y2);
@@ -331,7 +332,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 
 		int bg_color = 0;
 		int fg_color = 0;
-		int frame_color = 0; // flowers
 		int frame = 0;		 // 1-frame; 0 - fill
 
 		// if the current day of the current month
@@ -341,8 +341,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 			if (color_scheme[CALEND_COLOR_TODAY_BG] & (1 << 31))
 			{ // if the fill is disabled only the frame
 
-				// set the border color to CALEND_COLOR_TODAY_BG, the background inside the border and the text color are the same as before
-				frame_color = (color_scheme[CALEND_COLOR_TODAY_BG & COLOR_MASK]);
 				// draw a frame
 				frame = 1;
 
@@ -407,8 +405,7 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		// drawing the number background
 		int pos_x1 = H_MARGIN + (col - 1) * (WIDTH + H_SPACE);
 		int pos_y1 = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 9;
-		int pos_x2 = pos_x1 + WIDTH;
-		int pos_y2 = pos_y1 + HEIGHT;
+
 
 		set_bg_color(bg_color);
 		set_fg_color(fg_color);
@@ -444,6 +441,7 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	set_bg_color(color_scheme[CALEND_COLOR_BG]);
 	set_fg_color(color_scheme[CALEND_COLOR_SEPAR]);
 	draw_rect(pos_x1_frame, pos_y1_frame, pos_x2_frame, pos_y2_frame); // add today frame
+	draw_all_events(month, year);
 };
 
 unsigned char wday(unsigned int day, unsigned int month, unsigned int year)
@@ -672,3 +670,150 @@ int dispatch_calend_screen(void *param)
 
 	return result;
 };
+
+
+struct datetime_ from_unix_time_to_datetime_(int unix_time){
+
+
+	struct datetime_ res;
+
+	uint32_t t = unix_time + 37;
+
+	//Retrieve hours, minutes and seconds
+    res.sec = t % 60;
+    t /= 60;
+    res.min = t % 60;
+    t /= 60;
+    res.hour = t % 24;
+    t /= 24;
+
+	uint32_t a;
+    uint32_t b;
+    uint32_t c;
+    uint32_t d;
+    uint32_t e;
+    uint32_t f;
+  
+    //Negative Unix time values are not supported
+    if(t < 1)
+       t = 0;
+  
+
+  
+    
+  
+    //Convert Unix time to date
+    a = (uint32_t) ((4 * t + 102032) / 146097 + 15);
+    b = (uint32_t) (t + 2442113 + a - (a / 4));
+    c = (20 * b - 2442) / 7305;
+    d = b - 365 * c - (c / 4);
+    e = d * 1000 / 30601;
+    f = d - e * 30 - e * 601 / 1000;
+  
+    //January and February are counted as months 13 and 14 of the previous year
+    if(e <= 13)
+    {
+       c -= 4716;
+       e -= 1;
+    }
+    else
+    {
+       c -= 4715;
+       e -= 13;
+    }
+  
+    //Retrieve year, month and day
+    res.year = c;
+    res.month = e;
+    res.day = f;
+
+	return res;
+
+
+	// char buf[180];
+	// char tmp_buf[30];
+
+	// _sprintf(buf, "%d", res.year);
+	// _strcat(buf, "-");
+	// _sprintf(tmp_buf, "%d", res.month);
+	// _strcat(buf, tmp_buf);
+	// _strcat(buf, "-");
+	// _sprintf(tmp_buf, "%d", res.day);
+	// _strcat(buf, tmp_buf);
+	// _strcat(buf, " ");
+	// _sprintf(tmp_buf, "%.2d", res.hour);
+	// _strcat(buf, tmp_buf);
+	// _strcat(buf, ":");
+	// _sprintf(tmp_buf, "%.2d", res.min);
+	// _strcat(buf, tmp_buf);
+	// _strcat(buf, ":");
+	// _sprintf(tmp_buf, "%.2d", res.sec);
+	// _strcat(buf, tmp_buf);
+	// _strcpy(debug_chars, buf);
+
+	// _debug_print();
+
+}
+
+
+void _debug_print(char * str){
+	repaint_screen_lines(1, 176);
+	set_bg_color(COLOR_BLACK);
+	set_fg_color(COLOR_WHITE);
+	draw_filled_rect_bg(10,10,160,160);
+	text_out_center(str, 75, 75);
+	repaint_screen_lines(1, 176);
+}
+
+
+  
+void _strcat(char * destination, const char * source ){
+	int len_dest = _strlen(destination);
+	_strcpy(destination + len_dest, source);
+}
+
+
+// djb2: http://www.cse.yorku.ca/~oz/hash.html
+int hash(const char *str)
+{	
+	int hash = 5381;
+	int c;
+	while (c = *str++)
+		hash = ((hash << 5) + hash) + c; 
+	return hash;
+}
+
+struct event_ create_event(int unix_time_start, int unix_time_end, char* event_name,  char* event_type)
+{
+	struct event_ res;
+	
+
+	int colors[7] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_AQUA, COLOR_PURPLE, COLOR_WHITE};
+	int color = colors[hash(event_type) % 7];
+
+	res.color = color;
+	res.start = from_unix_time_to_datetime_(unix_time_start);
+	res.end = from_unix_time_to_datetime_(unix_time_end);
+	res.type_of_event = event_type;
+	res.name = event_name;
+
+	return res;
+}
+
+void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned int year)
+{
+	if (ev.start.month == month && ev.start.year == year)
+	{
+		_debug_print("draw_event_ correct");
+	}
+	else
+	{
+		_debug_print("error in draw_event_");
+	}
+}
+
+void draw_all_events(unsigned int month, unsigned int year)
+{
+	struct event_ dummy_event = create_event(1584396145, 1584399745, "yada", "work");
+	draw_event_in_monthly_view(dummy_event, month, year);
+}

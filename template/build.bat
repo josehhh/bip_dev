@@ -12,7 +12,7 @@
 @SET BASE_PATH=d:\Dev\AmazfitBip_FW\soft\Patch\GNUArmEmbeddedGCC
 @SET LIBRARY_PATH="!BASE_PATH!\arm-none-eabi\lib\thumb\v7e-m+fp\hard"
 @SET LD_OPT=-lm -lc
-@SET GCC_OPT=-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fno-math-errno 
+@SET GCC_OPT=-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=soft -fno-math-errno 
 @SET EABI=arm-none-eabi
 @SET COMPILERPATH=%BASE_PATH%\bin
 @SET LIB_BIP_PATH="..\libbip"

@@ -63,6 +63,17 @@
 
 #define INACTIVITY_PERIOD		300000		//	time after which we leave
 
+#include <libbip.h>
+
+
+struct event_{
+	struct datetime_ start;
+	struct datetime_ end;
+	char* name;
+	char* type_of_event;
+	int color;
+};
+
 // stored calendar options
 struct calend_opt_ {
 		unsigned char	color_scheme;	//	color scheme
@@ -88,5 +99,11 @@ void calend_screen_job();
 void draw_month(unsigned int day, unsigned int month, unsigned int year);
 unsigned char wday(unsigned int day,unsigned int month,unsigned int year);
 unsigned char isLeapYear(unsigned int year);
-					
+struct datetime_ from_unix_time_to_datetime_(int unix_time);
+struct event_ create_event(int unix_time_start, int unix_time_end, char* event_name,  char* event_type);
+void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned int year);
+void _debug_print();
+void _strcat(char * destination, const char * source );
+void draw_all_events(unsigned int month, unsigned int year);
+
 #endif
