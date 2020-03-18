@@ -101,6 +101,9 @@ void show_calend_screen(void *param0)
 		// get the current date
 		get_current_date_time(&datetime);
 
+		// generate test events. This funtion should read events from smartphone or memory.
+		read_all_events();
+
 		calend->day = datetime.day;
 		calend->month = datetime.month;
 		calend->year = datetime.year;
@@ -442,7 +445,8 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	set_bg_color(color_scheme[CALEND_COLOR_BG]);
 	set_fg_color(color_scheme[CALEND_COLOR_SEPAR]);
 	draw_rect(pos_x1_frame, pos_y1_frame, pos_x2_frame, pos_y2_frame); // add today frame
-	draw_all_events(month, year);
+	draw_all_events_in_monthly(day, month, year);
+	repaint_screen();
 };
 
 unsigned char wday(unsigned int day, unsigned int month, unsigned int year)
@@ -505,62 +509,60 @@ int dispatch_calend_screen(void *param)
 	{
 
 		// vibration with any touch on the screen
-		vibrate(1, 40, 0);
-
-		if (gest->touch_pos_y < CALEND_Y_BASE)
-		{ // clicked on the top line
-			if (gest->touch_pos_x < 44)
-			{
-				if (calend->year > 1600)
-					calend->year--;
-			}
-			else if (gest->touch_pos_x > (176 - 44))
-			{
-				if (calend->year < 3000)
-					calend->year++;
-			}
-			else
-			{
+		// vibrate(1, 40, 0);
+		// if (gest->touch_pos_y < CALEND_Y_BASE)
+		// { // clicked on the top line
+			// if (gest->touch_pos_x < 44)
+			// {
+			// 	if (calend->year > 1600)
+			// 		calend->year--;
+			// }
+			// else if (gest->touch_pos_x > (176 - 44))
+			// {
+			// 	if (calend->year < 3000)
+			// 		calend->year++;
+			// }
+			// else
+			// {
 				calend->day = datetime.day;
 				calend->month = datetime.month;
 				calend->year = datetime.year;
-			}
-
-			if ((calend->year == datetime.year) && (calend->month == datetime.month))
-			{
-				day = datetime.day;
-			}
-			else
-			{
-				day = 0;
-			}
-			draw_month(day, calend->month, calend->year);
+			// }
+			// if ((calend->year == datetime.year) && (calend->month == datetime.month))
+			// {
+			// 	day = datetime.day;
+			// }
+			// else
+			// {
+			// 	day = 0;
+			// }
+			draw_month(calend->day, calend->month, calend->year);
 			repaint_screen_lines(1, 176);
-		}
-		else
-		{ // clicked on calendar
+		// }
+		// else
+		// { // clicked on calendar
 
-			calend->color_scheme = ((calend->color_scheme + 1) % COLOR_SCHEME_COUNT);
+		// 	calend->color_scheme = ((calend->color_scheme + 1) % COLOR_SCHEME_COUNT);
 
-			// first refresh the screen
-			if ((calend->year == datetime.year) && (calend->month == datetime.month))
-			{
-				day = datetime.day;
-			}
-			else
-			{
-				day = 0;
-			}
-			draw_month(day, calend->month, calend->year);
-			repaint_screen_lines(1, 176);
+		// 	// first refresh the screen
+		// 	if ((calend->year == datetime.year) && (calend->month == datetime.month))
+		// 	{
+		// 		day = datetime.day;
+		// 	}
+		// 	else
+		// 	{
+		// 		day = 0;
+		// 	}
+		// 	draw_month(day, calend->month, calend->year);
+		// 	repaint_screen_lines(1, 176);
 
-			// then write options to flash memory, because it's a long operation
-			// TODO: 1. if there are more options than the color scheme - redo the save to save before exiting.
-			calend_opt.color_scheme = calend->color_scheme;
+		// 	// then write options to flash memory, because it's a long operation
+		// 	// TODO: 1. if there are more options than the color scheme - redo the save to save before exiting.
+		// 	calend_opt.color_scheme = calend->color_scheme;
 
-			// write the settings to flash memory
-			ElfWriteSettings(calend->proc->index_listed, &calend_opt, OPT_OFFSET_CALEND_OPT, sizeof(struct calend_opt_));
-		}
+		// 	// write the settings to flash memory
+		// 	ElfWriteSettings(calend->proc->index_listed, &calend_opt, OPT_OFFSET_CALEND_OPT, sizeof(struct calend_opt_));
+		// }
 
 		// extend inactivity exit timer through INACTIVITY_PERIOD with
 		set_update_period(1, INACTIVITY_PERIOD);
@@ -636,6 +638,7 @@ int dispatch_calend_screen(void *param)
 		else
 			day = 0;
 		draw_month(day, calend->month, calend->year);
+		draw_list_of_future_events(0);
 		repaint_screen_lines(1, 176);
 
 		// extend inactivity exit timer through INACTIVITY_PERIOD с
@@ -779,26 +782,28 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 {
 	struct event_ res;
 
-	int colors[7] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW, COLOR_AQUA, COLOR_PURPLE, COLOR_WHITE};
-	int color = colors[hash(event_type) % 7];
+	int colors[4] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW};
+	int color = colors[hash(event_type) % 4];
 
 	res.color = color;
-	res.start = from_unix_time_to_datetime_(unix_time_start);
-	res.end = from_unix_time_to_datetime_(unix_time_end);
-	res.type_of_event = event_type;
-	res.name = event_name;
-
+	res.start = unix_time_start;
+	res.end = unix_time_end;
+	
+	_strcpy(res.name, event_name);
+	_strcpy(res.type_of_event, event_type);
+	
 	return res;
 }
 
 void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned int year)
 {
-	if (ev.start.month == month && ev.start.year == year)
+	struct datetime_ start_datetime = from_unix_time_to_datetime_(ev.start);
+
+	if (start_datetime.month == month && start_datetime.year == year)
 	{
 		int pos_x = -1;
 		int pos_y = -1;
-		get_pos_day_in_monthly(ev.start.day, ev.start.month, ev.start.year, &pos_x, &pos_y);
-
+		get_pos_day_in_monthly(start_datetime.day, start_datetime.month, start_datetime.year, &pos_x, &pos_y);
 		set_bg_color(ev.color);
 		pos_y += get_text_height() + 2;
 		draw_filled_rect_bg(pos_x, pos_y, pos_x + 5, pos_y + 5);
@@ -861,8 +866,76 @@ void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int y
 	}
 }
 
-void draw_all_events(unsigned int month, unsigned int year)
+void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned int year)
 {
-	struct event_ dummy_event = create_event(1584442731, 1584444731, "yada", "work");
-	draw_event_in_monthly_view(dummy_event, month, year);
+	for (int i = 0; i < all_events.number_of_events; i++)
+	{
+		draw_event_in_monthly_view(all_events.array_of_events[i], month, year);
+	}
+	repaint_screen();
+}
+
+void draw_list_of_future_events(int page_number)
+{
+	#define N_EVENTS_PAGE 4
+	#define VERT_SPACE_FOR_EVENT_IN_LIST VIDEO_Y / N_EVENTS_PAGE
+
+	int list_pos = 0;
+
+
+	set_bg_color(COLOR_BLACK);
+	set_fg_color(COLOR_WHITE);
+	fill_screen_bg();
+	for (int i = 0; i < N_EVENTS_PAGE; i++)
+	{
+		struct datetime_ tmp_date = from_unix_time_to_datetime_(all_events.array_of_events[i].start);
+
+		int upper_pos_item = VERT_SPACE_FOR_EVENT_IN_LIST * i;
+		int date_pos = upper_pos_item + 0;
+		int square_y_pos = date_pos + 8;
+		int event_text_pos = upper_pos_item + get_text_height() -1;
+
+
+		char date_string[40];
+		char buf[10];
+
+		_sprintf(date_string, "%d", tmp_date.year);
+		_strcat(date_string, "-");
+		_sprintf(buf, "%d", tmp_date.month);
+		_strcat(date_string, buf);
+		_strcat(date_string, "-");
+		_sprintf(buf, "%d", tmp_date.day);
+		_strcat(date_string, buf);
+		_strcat(date_string, " ");
+		_sprintf(buf, "%.2d", tmp_date.hour);
+		_strcat(date_string, buf);
+		_strcat(date_string, ":");
+		_sprintf(buf, "%.2d", tmp_date.min);
+		_strcat(date_string, buf);
+		_strcat(date_string, ":");
+		_sprintf(buf, "%.2d", tmp_date.sec);
+		_strcat(date_string, buf);
+
+		set_fg_color(all_events.array_of_events[i].color);
+		draw_filled_rect(4, square_y_pos, 4 + 4, square_y_pos + 4);
+		set_fg_color(COLOR_WHITE);
+
+		text_out(date_string, 13, date_pos);
+		text_out(all_events.array_of_events[i].name, 15,  event_text_pos);
+		draw_horizontal_line(upper_pos_item + VERT_SPACE_FOR_EVENT_IN_LIST - 1, 0, VIDEO_X);
+	}
+	
+	
+	repaint_screen();
+}
+
+void read_all_events(){
+	#define ONE_DAY 86400
+	#define ONE_HOUR 3600
+	all_events.array_of_events[0] = create_event(1584442731 - ONE_DAY, 1584444731 - ONE_DAY, "Meeting with boss", "work");
+	all_events.array_of_events[1] = create_event(1584442731 + ONE_HOUR, 1584444731 + ONE_HOUR, "Swimming Pool", "freestime");
+	all_events.array_of_events[2] = create_event(1584442731 + 2*ONE_DAY + ONE_HOUR * 3, 1584444731 + 2*ONE_DAY + ONE_HOUR * 3, "Bowling with Jimbo", "free_time");
+	all_events.array_of_events[3] = create_event(1584442731 + 4*ONE_DAY + ONE_HOUR * 7, 1584444731 + 4*ONE_DAY + ONE_HOUR * 7, "Beers with sam", "freefstime");
+	all_events.array_of_events[4] = create_event(1584442731, 1584444731, "Jhons birthday party", "family");
+	all_events.number_of_events = 5;
 }

@@ -60,18 +60,18 @@
 #define V_MARGIN 1 // vertical indent from the header (base)
 #endif
 
-
+#define MAX_NUMBER_OF_EVENTS 10
 #define INACTIVITY_PERIOD		300000		//	time after which we leave
 
 #include <libbip.h>
 
 
 struct event_{
-	struct datetime_ start;
-	struct datetime_ end;
-	char* name;
-	char* type_of_event;
-	int color;
+	char name[30];
+	int start; // start and end are in unix time, to save memory and be easyer to transmit in the future
+	int end;
+	char type_of_event[20];
+	long color;
 };
 
 // stored calendar options
@@ -90,6 +90,22 @@ unsigned int 	month;				//	month
 unsigned int 	year;				//	year
 };
 
+struct all_events_{
+int number_of_events;
+struct event_ array_of_events[MAX_NUMBER_OF_EVENTS];
+} all_events;
+
+// sort array of events from first starting to last starting.
+void sort_events_(struct all_events_ all_events);
+
+// return the index of the first event in a day sorted by starting time. If no events that day, return -1.
+int get_index_of_first_event_in_day(unsigned int year, unsigned int month, unsigned int day);
+
+// list view of future events
+void draw_list_of_future_events(int page_number);
+
+// This function should read future events from the smartphone
+void read_all_events();
 
 void show_calend_screen (void *return_screen);
 void key_press_calend_screen();
@@ -106,6 +122,7 @@ void _debug_print();
 void _strcat(char * destination, const char * source );
 void draw_all_events(unsigned int month, unsigned int year);
 void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int year, int* pos_x, int* pos_y);
+void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned int year);
 
 
 #endif
