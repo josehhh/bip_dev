@@ -46,37 +46,22 @@ void show_calend_screen(void *param0)
 	struct calend_ *calend;							  //	pointer to screen data
 	struct calend_opt_ calend_opt;					  //	calendar options
 
-#ifdef DEBUG_LOG
-	log_printf(5, "[show_calend_screen] param0=%X; *temp_buf_2=%X; menu_overlay=%d", (int)param0, (int *)get_ptr_temp_buf_2(), get_var_menu_overlay());
-	log_printf(5, " #calend_p=%X; *calend_p=%X", (int)calend_p, (int)*calend_p);
-#endif
-
 	if ((param0 == *calend_p) && get_var_menu_overlay())
 	{ // return from the overlay screen (incoming call, notification, alarm, target, etc.)
 
-#ifdef DEBUG_LOG
-		log_printf(5, "  #from overlay");
-		log_printf(5, "\r\n");
-#endif
-
 		calend = *calend_p; //	 pointer to data must be saved for exception
 							//	memory release function reg_menu
-		*calend_p = NULL;   //	nullify the pointer to pass to the reg_menu function
+		*calend_p = NULL;	//	nullify the pointer to pass to the reg_menu function
 
 		// 	create a new screen, while the pointers temp_buf_1 and temp_buf_2 were 0 and the memory was not freed
 		reg_menu(&menu_calend_screen, 0); // 	menu_overlay=0
 
 		*calend_p = calend; //	we restore the pointer to the data after the reg_menu function
-
-		draw_month(0, calend->month, calend->year);
+		draw_calendar(calend);
 	}
 	else
 	{ // if the function started from the menu,
 
-#ifdef DEBUG_LOG
-		log_printf(5, "  #from menu");
-		log_printf(5, "\r\n");
-#endif
 		// create a screen
 		reg_menu(&menu_calend_screen, 0);
 
@@ -117,7 +102,9 @@ void show_calend_screen(void *param0)
 		else
 			calend->color_scheme = 0;
 
-		draw_month(calend->day, calend->month, calend->year);
+		calend->calendar_screen_view = CALENDAR_VIEW_MONTHLY;
+		calend->event_list_page = 0;
+		draw_calendar(calend);
 	}
 
 	// when idle, turn off the backlight and do not exit
@@ -130,10 +117,8 @@ void show_calend_screen(void *param0)
 
 void draw_month(unsigned int day, unsigned int month, unsigned int year)
 {
-	struct calend_ **calend_p = get_ptr_temp_buf_2(); //	указатель на указатель на данные экрана
-	struct calend_ *calend = *calend_p;				  //	указатель на данные экрана
-
-#pragma region colors
+	struct calend_ **calend_p = get_ptr_temp_buf_2(); //	pointer to screen data pointer
+	struct calend_ *calend = *calend_p;				  //	pointer to screen data
 
 	// black theme without highlighting the weekend with today's highlight frame*/
 	static unsigned char short_color_scheme[15] = {
@@ -160,12 +145,10 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	{
 		color_scheme[j] = (((unsigned int)short_color_scheme[j] & (unsigned char)COLOR_SH_MASK) & COLOR_SH_RED) ? COLOR_RED : 0;	  //  red component
 		color_scheme[j] |= (((unsigned int)short_color_scheme[j] & (unsigned char)COLOR_SH_MASK) & COLOR_SH_GREEN) ? COLOR_GREEN : 0; //	green component
-		color_scheme[j] |= (((unsigned int)short_color_scheme[j] & (unsigned char)COLOR_SH_MASK) & COLOR_SH_BLUE) ? COLOR_BLUE : 0;   //	blue component
+		color_scheme[j] |= (((unsigned int)short_color_scheme[j] & (unsigned char)COLOR_SH_MASK) & COLOR_SH_BLUE) ? COLOR_BLUE : 0;	  //	blue component
 		color_scheme[j] |= (((unsigned int)short_color_scheme[j] & (unsigned char)(1 << 7))) ? (1 << 31) : 0;						  //	for the frame
 	}
-#pragma endregion
 
-#pragma region text_region
 	char text_buffer[24];
 	char *weekday_string_ru[] = {"??", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"};
 	char *weekday_string_en[] = {"??", "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"};
@@ -251,8 +234,6 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 	}
 	}
 
-#pragma endregion
-
 	unsigned char day_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 	_memclr(&text_buffer, 24);
@@ -328,6 +309,9 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		d = day_month[m] - d + 2;
 	}
 
+	struct datetime_ datetime;
+	get_current_date_time(&datetime); // get the current date
+
 	// day of the month
 	for (unsigned i = 1; (i <= 7 * 6); i++)
 	{
@@ -342,68 +326,20 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		int frame = 0; // 1-frame; 0 - fill
 
 		// if the current day of the current month
-		if ((m == month) && (d == day))
+		if ((m == datetime.month) && (d == datetime.day) && (year == datetime.year))
 		{
+			frame = 1;
+		}
 
-			if (color_scheme[CALEND_COLOR_TODAY_BG] & (1 << 31))
-			{ // if the fill is disabled only the frame
-
-				// draw a frame
-				frame = 1;
-
-				if (col > 5)
-				{ // if weekend
-					bg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_BG]);
-					fg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_FG]);
-				}
-				else
-				{ //	if weekdays
-					bg_color = (color_scheme[CALEND_COLOR_BG]);
-					fg_color = (color_scheme[CALEND_COLOR_CUR_WORK]);
-				};
-			}
-			else
-			{ // if fill is enabled
-				if (col > 5)
-				{ // if weekend
-					bg_color = (color_scheme[CALEND_COLOR_TODAY_BG] & COLOR_MASK);
-					fg_color = (color_scheme[CALEND_COLOR_TODAY_FG]);
-				}
-				else
-				{ //	if weekdays
-					bg_color = (color_scheme[CALEND_COLOR_TODAY_BG] & COLOR_MASK);
-					fg_color = (color_scheme[CALEND_COLOR_TODAY_FG]);
-				};
-			};
+		if (month == m)
+		{
+			bg_color = (color_scheme[CALEND_COLOR_BG]);
+			fg_color = (color_scheme[CALEND_COLOR_CUR_WORK]);
 		}
 		else
 		{
-			if (col > 5)
-			{ // if weekend
-				if (month == m)
-				{
-					bg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_BG]);
-					fg_color = (color_scheme[CALEND_COLOR_CUR_HOLY_FG]);
-				}
-				else
-				{
-					bg_color = (color_scheme[CALEND_COLOR_NOT_CUR_HOLY_BG]);
-					fg_color = (color_scheme[CALEND_COLOR_NOT_CUR_HOLY_FG]);
-				}
-			}
-			else
-			{ // if weekdays
-				if (month == m)
-				{
-					bg_color = (color_scheme[CALEND_COLOR_BG]);
-					fg_color = (color_scheme[CALEND_COLOR_CUR_WORK]);
-				}
-				else
-				{
-					bg_color = (color_scheme[CALEND_COLOR_BG]);
-					fg_color = (color_scheme[CALEND_COLOR_NOT_CUR_WORK]);
-				}
-			}
+			bg_color = (color_scheme[CALEND_COLOR_BG]);
+			fg_color = (color_scheme[CALEND_COLOR_NOT_CUR_WORK]);
 		}
 
 		//  line: from 7 to 169 = 162 px in width 7 numbers by 24 px per number 7+(22+2)*6+22+3
@@ -422,10 +358,10 @@ void draw_month(unsigned int day, unsigned int month, unsigned int year)
 		{ // TODO make a function out of this
 			// with frame
 
-			pos_x1_frame = H_MARGIN + (col - 1) * (WIDTH + H_SPACE) - 1;
+			pos_x1_frame = H_MARGIN + (col - 1) * (WIDTH + H_SPACE);
 			pos_y1_frame = calend_days_y_base + V_MARGIN + row * (HEIGHT + V_SPACE) - 6;
 			pos_x2_frame = pos_x1_frame + WIDTH - 1;
-			pos_y2_frame = pos_y1_frame + HEIGHT + 1;
+			pos_y2_frame = pos_y1_frame + HEIGHT - 1;
 		};
 
 		if (d < day_month[m])
@@ -507,69 +443,37 @@ int dispatch_calend_screen(void *param)
 	{
 	case GESTURE_CLICK:
 	{
+		if (calend->calendar_screen_view == CALENDAR_VIEW_MONTHLY)
+		{
 
-		// vibration with any touch on the screen
-		// vibrate(1, 40, 0);
-		// if (gest->touch_pos_y < CALEND_Y_BASE)
-		// { // clicked on the top line
+			// if (gest->touch_pos_y < CALEND_Y_BASE)
+			// { // clicked on the top line
 			// if (gest->touch_pos_x < 44)
-			// {
-			// 	if (calend->year > 1600)
-			// 		calend->year--;
-			// }
-			// else if (gest->touch_pos_x > (176 - 44))
-			// {
-			// 	if (calend->year < 3000)
-			// 		calend->year++;
-			// }
-			// else
-			// {
-				calend->day = datetime.day;
-				calend->month = datetime.month;
-				calend->year = datetime.year;
-			// }
-			// if ((calend->year == datetime.year) && (calend->month == datetime.month))
-			// {
-			// 	day = datetime.day;
-			// }
-			// else
-			// {
-			// 	day = 0;
-			// }
-			draw_month(calend->day, calend->month, calend->year);
-			repaint_screen_lines(1, 176);
-		// }
-		// else
-		// { // clicked on calendar
+			calend->day = datetime.day;
+			calend->month = datetime.month;
+			calend->year = datetime.year;
+		}
 
-		// 	calend->color_scheme = ((calend->color_scheme + 1) % COLOR_SCHEME_COUNT);
-
-		// 	// first refresh the screen
-		// 	if ((calend->year == datetime.year) && (calend->month == datetime.month))
-		// 	{
-		// 		day = datetime.day;
-		// 	}
-		// 	else
-		// 	{
-		// 		day = 0;
-		// 	}
-		// 	draw_month(day, calend->month, calend->year);
-		// 	repaint_screen_lines(1, 176);
-
-		// 	// then write options to flash memory, because it's a long operation
-		// 	// TODO: 1. if there are more options than the color scheme - redo the save to save before exiting.
+		draw_calendar(calend);
 		// 	calend_opt.color_scheme = calend->color_scheme;
 
 		// 	// write the settings to flash memory
 		// 	ElfWriteSettings(calend->proc->index_listed, &calend_opt, OPT_OFFSET_CALEND_OPT, sizeof(struct calend_opt_));
-		// }
 
 		// extend inactivity exit timer through INACTIVITY_PERIOD with
 		set_update_period(1, INACTIVITY_PERIOD);
 		break;
 	};
 
-	case GESTURE_SWIPE_RIGHT: //	swap right
+	case GESTURE_SWIPE_RIGHT: //	from left to right
+	{
+		// action when starting from the menu and further swipe left
+		calend->calendar_screen_view++;
+		calend->calendar_screen_view % NUMBER_OF_CALEND_VIEWS;
+		draw_calendar(calend);
+		set_update_period(1, INACTIVITY_PERIOD);
+		break;
+	}
 	case GESTURE_SWIPE_LEFT:
 	{ // from right to left
 
@@ -613,9 +517,6 @@ int dispatch_calend_screen(void *param)
 			}
 			case GESTURE_SWIPE_LEFT:
 			{ // swipe left
-				// action when starting from the menu and further swipe left
-
-				break;
 			}
 			} /// switch (gest->gesture)
 		}
@@ -625,44 +526,53 @@ int dispatch_calend_screen(void *param)
 
 	case GESTURE_SWIPE_UP:
 	{ // swipe up
-		if (calend->month < 12)
-			calend->month++;
-		else
+
+		if (calend->calendar_screen_view == CALENDAR_VIEW_MONTHLY)
 		{
-			calend->month = 1;
-			calend->year++;
+			if (calend->month < 12)
+				calend->month++;
+			else
+			{
+				calend->month = 1;
+				calend->year++;
+			}
+
+			if ((calend->year == datetime.year) && (calend->month == datetime.month))
+				day = datetime.day;
+			else
+				day = 0;
 		}
-
-		if ((calend->year == datetime.year) && (calend->month == datetime.month))
-			day = datetime.day;
-		else
-			day = 0;
-		draw_month(day, calend->month, calend->year);
-		draw_list_of_future_events(0);
-		repaint_screen_lines(1, 176);
-
-		// extend inactivity exit timer through INACTIVITY_PERIOD с
+		else if (calend->calendar_screen_view == CALENDAR_VIEW_LIST)
+		{
+		}
+		draw_calendar(calend);
+		// extend inactivity exit timer through INACTIVITY_PERIOD
 		set_update_period(1, INACTIVITY_PERIOD);
 		break;
 	};
 	case GESTURE_SWIPE_DOWN:
 	{ // swipe down
-		if (calend->month > 1)
-			calend->month--;
-		else
+
+		if (calend->calendar_screen_view == CALENDAR_VIEW_MONTHLY)
 		{
-			calend->month = 12;
-			calend->year--;
+			if (calend->month > 1)
+				calend->month--;
+			else
+			{
+				calend->month = 12;
+				calend->year--;
+			}
+
+			if ((calend->year == datetime.year) && (calend->month == datetime.month))
+				day = datetime.day;
+			else
+				day = 0;
 		}
-
-		if ((calend->year == datetime.year) && (calend->month == datetime.month))
-			day = datetime.day;
-		else
-			day = 0;
-		draw_month(day, calend->month, calend->year);
-		repaint_screen_lines(1, 176);
-
-		// extend inactivity exit timer through INACTIVITY_PERIOD с
+		else if (calend->calendar_screen_view == CALENDAR_VIEW_LIST)
+		{
+		}
+		draw_calendar(calend);
+		// extend inactivity exit timer through INACTIVITY_PERIOD
 		set_update_period(1, INACTIVITY_PERIOD);
 		break;
 	};
@@ -782,16 +692,17 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 {
 	struct event_ res;
 
-	int colors[4] = {COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_YELLOW};
-	int color = colors[hash(event_type) % 4];
+#define n_colors 6
+	int colors[n_colors] = {COLOR_BLUE, COLOR_AQUA, COLOR_GREEN, COLOR_PURPLE, COLOR_RED, COLOR_SH_YELLOW};
+	int color = colors[hash(event_type) % n_colors];
 
 	res.color = color;
 	res.start = unix_time_start;
 	res.end = unix_time_end;
-	
+
 	_strcpy(res.name, event_name);
 	_strcpy(res.type_of_event, event_type);
-	
+
 	return res;
 }
 
@@ -799,22 +710,22 @@ void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned i
 {
 	struct datetime_ start_datetime = from_unix_time_to_datetime_(ev.start);
 
-	if (start_datetime.month == month && start_datetime.year == year)
+	int pos_x = -1;
+	int pos_y = -1;
+
+	if (month == start_datetime.month)
 	{
-		int pos_x = -1;
-		int pos_y = -1;
 		get_pos_day_in_monthly(start_datetime.day, start_datetime.month, start_datetime.year, &pos_x, &pos_y);
 		set_bg_color(ev.color);
 		pos_y += get_text_height() + 2;
 		draw_filled_rect_bg(pos_x, pos_y, pos_x + 5, pos_y + 5);
 		set_bg_color(COLOR_BLACK);
 	}
-	else
-	{
-		return;
-	}
+	return;
 }
 
+#define X_CENTERING_OFFSET (WIDTH / 2 - 4)
+#define Y_CENTERING_OFFSET -3
 void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int year, int *pos_x, int *pos_y)
 {
 	unsigned char day_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -846,8 +757,6 @@ void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int y
 		unsigned char col = (i - 1) % 7 + 1;
 
 		// if the current day of the current month
-		#define X_CENTERING_OFFSET (WIDTH / 2 - 4)
-		#define Y_CENTERING_OFFSET - 3
 		if ((m == month) && (d == day))
 		{
 			*pos_x = H_MARGIN + (col - 1) * (WIDTH + H_SPACE) + X_CENTERING_OFFSET;
@@ -868,20 +777,24 @@ void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int y
 
 void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned int year)
 {
+	struct calend_ **calend_p = get_ptr_temp_buf_2(); //	pointer to screen data pointer
+	struct calend_ *calend = *calend_p;				  //	pointer to screen data
+
+	set_graph_callback_to_ram_1();
+	load_font(); // load fonts
+
 	for (int i = 0; i < all_events.number_of_events; i++)
 	{
 		draw_event_in_monthly_view(all_events.array_of_events[i], month, year);
 	}
-	repaint_screen();
 }
 
+#define N_EVENTS_PAGE 4
+#define VERT_SPACE_FOR_EVENT_IN_LIST VIDEO_Y / N_EVENTS_PAGE
 void draw_list_of_future_events(int page_number)
 {
-	#define N_EVENTS_PAGE 4
-	#define VERT_SPACE_FOR_EVENT_IN_LIST VIDEO_Y / N_EVENTS_PAGE
 
 	int list_pos = 0;
-
 
 	set_bg_color(COLOR_BLACK);
 	set_fg_color(COLOR_WHITE);
@@ -893,8 +806,7 @@ void draw_list_of_future_events(int page_number)
 		int upper_pos_item = VERT_SPACE_FOR_EVENT_IN_LIST * i;
 		int date_pos = upper_pos_item + 0;
 		int square_y_pos = date_pos + 8;
-		int event_text_pos = upper_pos_item + get_text_height() -1;
-
+		int event_text_pos = upper_pos_item + get_text_height() - 1;
 
 		char date_string[40];
 		char buf[10];
@@ -921,21 +833,43 @@ void draw_list_of_future_events(int page_number)
 		set_fg_color(COLOR_WHITE);
 
 		text_out(date_string, 13, date_pos);
-		text_out(all_events.array_of_events[i].name, 15,  event_text_pos);
+		text_out(all_events.array_of_events[i].name, 15, event_text_pos);
 		draw_horizontal_line(upper_pos_item + VERT_SPACE_FOR_EVENT_IN_LIST - 1, 0, VIDEO_X);
 	}
-	
-	
+
 	repaint_screen();
 }
 
-void read_all_events(){
-	#define ONE_DAY 86400
-	#define ONE_HOUR 3600
+#define ONE_DAY 86400
+#define ONE_HOUR 3600
+void read_all_events()
+{
 	all_events.array_of_events[0] = create_event(1584442731 - ONE_DAY, 1584444731 - ONE_DAY, "Meeting with boss", "work");
 	all_events.array_of_events[1] = create_event(1584442731 + ONE_HOUR, 1584444731 + ONE_HOUR, "Swimming Pool", "freestime");
-	all_events.array_of_events[2] = create_event(1584442731 + 2*ONE_DAY + ONE_HOUR * 3, 1584444731 + 2*ONE_DAY + ONE_HOUR * 3, "Bowling with Jimbo", "free_time");
-	all_events.array_of_events[3] = create_event(1584442731 + 4*ONE_DAY + ONE_HOUR * 7, 1584444731 + 4*ONE_DAY + ONE_HOUR * 7, "Beers with sam", "freefstime");
-	all_events.array_of_events[4] = create_event(1584442731, 1584444731, "Jhons birthday party", "family");
-	all_events.number_of_events = 5;
+	all_events.array_of_events[2] = create_event(1584442731 + 2 * ONE_DAY + ONE_HOUR * 3, 1584444731 + 2 * ONE_DAY + ONE_HOUR * 3, "Bowling with Jimbo", "free_time");
+	all_events.array_of_events[3] = create_event(1584442731 + 4 * ONE_DAY + ONE_HOUR * 7, 1584444731 + 4 * ONE_DAY + ONE_HOUR * 7, "Beers with sam", "freefstime");
+	all_events.array_of_events[4] = create_event(1585863092 - ONE_DAY, 1585863092 - ONE_DAY + ONE_HOUR, "Jhons birthday party", "family");
+	all_events.array_of_events[5] = create_event(1585863092 - 2 * ONE_DAY, 1585863092 - 2 * ONE_DAY + ONE_HOUR, "Jhons funeral", "famil2");
+	all_events.array_of_events[6] = create_event(1585863092, 1585863092, "Jhons zombiefication", "famil4");
+
+	all_events.number_of_events = 7;
+}
+
+void draw_calendar(struct calend_ *calend_p)
+{
+
+	if (calend_p->calendar_screen_view == CALENDAR_VIEW_MONTHLY)
+	{
+		draw_month(calend_p->day, calend_p->month, calend_p->year);
+	}
+	else if (calend_p->calendar_screen_view == CALENDAR_VIEW_LIST)
+	{
+		draw_list_of_future_events(0);
+	}
+	else
+	{
+		_debug_print("calend_p->cal_screen_view not recognn.");
+	}
+
+	return;
 }

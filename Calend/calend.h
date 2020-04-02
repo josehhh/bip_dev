@@ -88,7 +88,15 @@ unsigned char	color_scheme;		//	color scheme
 unsigned int 	day;				//	day
 unsigned int 	month;				//	month
 unsigned int 	year;				//	year
+
+int calendar_screen_view; // CALENDAR_VIEW_MONTHLY or CALENDAR_VIEW_LIST
+
+int event_list_page;
 };
+
+#define NUMBER_OF_CALEND_VIEWS 2
+#define CALENDAR_VIEW_MONTHLY 0
+#define CALENDAR_VIEW_LIST 1
 
 struct all_events_{
 int number_of_events;
@@ -111,6 +119,7 @@ void show_calend_screen (void *return_screen);
 void key_press_calend_screen();
 int dispatch_calend_screen (void *param);
 void calend_screen_job();
+void draw_calendar(struct calend_ *calend_p);
 
 void draw_month(unsigned int day, unsigned int month, unsigned int year);
 unsigned char wday(unsigned int day,unsigned int month,unsigned int year);
