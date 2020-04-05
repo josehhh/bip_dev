@@ -422,6 +422,72 @@ void calend_screen_job()
 	show_menu_animate(calend->ret_f, (unsigned int)show_calend_screen, ANIMATE_LEFT);
 }
 
+
+#define N_EVENTS_PAGE 4
+#define VERT_SPACE_FOR_EVENT_IN_LIST VIDEO_Y / N_EVENTS_PAGE
+void draw_list_of_future_events(int page_number)
+{
+
+	// char buf_list_pos_string[10];
+	// int list_pos = 0;
+	// _sprintf(buf_list_pos_string, "%d", page_number);
+
+	// _debug_print(buf_list_pos_string);
+
+	set_bg_color(COLOR_BLACK);
+	set_fg_color(COLOR_WHITE);
+	fill_screen_bg();
+	for (int i = 0; i < N_EVENTS_PAGE; i++)
+	{
+
+		int item_index = N_EVENTS_PAGE * page_number + i;
+		if(item_index >= all_events.number_of_events)
+		{
+			page_number = all_events.number_of_events / N_EVENTS_PAGE;
+			break;
+		}
+
+		struct datetime_ tmp_date = from_unix_time_to_datetime_(all_events.array_of_events[item_index].start);
+
+		int upper_pos_item = VERT_SPACE_FOR_EVENT_IN_LIST * i;
+		int date_pos = upper_pos_item + 0;
+		int square_y_pos = date_pos + 8;
+		int event_text_pos = upper_pos_item + get_text_height() - 1;
+
+		char date_string[40];
+		char buf[10];
+
+		_sprintf(date_string, "%d", tmp_date.year);
+		_strcat(date_string, "-");
+		_sprintf(buf, "%d", tmp_date.month);
+		_strcat(date_string, buf);
+		_strcat(date_string, "-");
+		_sprintf(buf, "%d", tmp_date.day);
+		_strcat(date_string, buf);
+		_strcat(date_string, " ");
+		_sprintf(buf, "%.2d", tmp_date.hour);
+		_strcat(date_string, buf);
+		_strcat(date_string, ":");
+		_sprintf(buf, "%.2d", tmp_date.min);
+		_strcat(date_string, buf);
+		_strcat(date_string, ":");
+		_sprintf(buf, "%.2d", tmp_date.sec);
+		_strcat(date_string, buf);
+
+		set_fg_color(all_events.array_of_events[item_index].color);
+		draw_filled_rect(4, square_y_pos, 4 + 4, square_y_pos + 4);
+		set_fg_color(COLOR_WHITE);
+
+		text_out(date_string, 13, date_pos);
+		text_out(all_events.array_of_events[item_index].name, 15, event_text_pos);
+		draw_horizontal_line(upper_pos_item + VERT_SPACE_FOR_EVENT_IN_LIST - 1, 0, VIDEO_X);
+	}
+
+	repaint_screen();
+}
+
+
+
 int dispatch_calend_screen(void *param)
 {
 	struct calend_ **calend_p = get_ptr_temp_buf_2(); //	pointer to screen data pointer
@@ -469,7 +535,7 @@ int dispatch_calend_screen(void *param)
 	{
 		// action when starting from the menu and further swipe left
 		calend->calendar_screen_view++;
-		calend->calendar_screen_view % NUMBER_OF_CALEND_VIEWS;
+		calend->calendar_screen_view %= NUMBER_OF_CALEND_VIEWS;
 		draw_calendar(calend);
 		set_update_period(1, INACTIVITY_PERIOD);
 		break;
@@ -516,7 +582,13 @@ int dispatch_calend_screen(void *param)
 				break;
 			}
 			case GESTURE_SWIPE_LEFT:
-			{ // swipe left
+			{	// swipe left
+				// action when starting from the menu and further swipe left
+				calend->calendar_screen_view++;
+				calend->calendar_screen_view %= NUMBER_OF_CALEND_VIEWS;
+				draw_calendar(calend);
+				set_update_period(1, INACTIVITY_PERIOD);
+				break;
 			}
 			} /// switch (gest->gesture)
 		}
@@ -544,6 +616,7 @@ int dispatch_calend_screen(void *param)
 		}
 		else if (calend->calendar_screen_view == CALENDAR_VIEW_LIST)
 		{
+			calend->event_list_page = min(calend->event_list_page + 1, all_events.number_of_events / N_EVENTS_PAGE);
 		}
 		draw_calendar(calend);
 		// extend inactivity exit timer through INACTIVITY_PERIOD
@@ -570,6 +643,7 @@ int dispatch_calend_screen(void *param)
 		}
 		else if (calend->calendar_screen_view == CALENDAR_VIEW_LIST)
 		{
+			calend->event_list_page = max(calend->event_list_page - 1, 0);
 		}
 		draw_calendar(calend);
 		// extend inactivity exit timer through INACTIVITY_PERIOD
@@ -667,7 +741,7 @@ void _debug_print(char *str)
 	repaint_screen_lines(1, 176);
 	set_bg_color(COLOR_BLACK);
 	set_fg_color(COLOR_WHITE);
-	draw_filled_rect_bg(10, 10, 160, 160);
+	draw_filled_rect_bg(5, 50, 100, 170);
 	text_out_center(str, 75, 75);
 	repaint_screen_lines(1, 176);
 }
@@ -692,7 +766,7 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 {
 	struct event_ res;
 
-#define n_colors 6
+	#define n_colors 6
 	int colors[n_colors] = {COLOR_BLUE, COLOR_AQUA, COLOR_GREEN, COLOR_PURPLE, COLOR_RED, COLOR_SH_YELLOW};
 	int color = colors[hash(event_type) % n_colors];
 
@@ -706,6 +780,8 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 	return res;
 }
 
+
+
 void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned int year)
 {
 	struct datetime_ start_datetime = from_unix_time_to_datetime_(ev.start);
@@ -713,7 +789,7 @@ void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned i
 	int pos_x = -1;
 	int pos_y = -1;
 
-	if (month == start_datetime.month)
+	if (month == start_datetime.month && year == start_datetime.year)
 	{
 		get_pos_day_in_monthly(start_datetime.day, start_datetime.month, start_datetime.year, &pos_x, &pos_y);
 		set_bg_color(ev.color);
@@ -789,56 +865,6 @@ void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned i
 	}
 }
 
-#define N_EVENTS_PAGE 4
-#define VERT_SPACE_FOR_EVENT_IN_LIST VIDEO_Y / N_EVENTS_PAGE
-void draw_list_of_future_events(int page_number)
-{
-
-	int list_pos = 0;
-
-	set_bg_color(COLOR_BLACK);
-	set_fg_color(COLOR_WHITE);
-	fill_screen_bg();
-	for (int i = 0; i < N_EVENTS_PAGE; i++)
-	{
-		struct datetime_ tmp_date = from_unix_time_to_datetime_(all_events.array_of_events[i].start);
-
-		int upper_pos_item = VERT_SPACE_FOR_EVENT_IN_LIST * i;
-		int date_pos = upper_pos_item + 0;
-		int square_y_pos = date_pos + 8;
-		int event_text_pos = upper_pos_item + get_text_height() - 1;
-
-		char date_string[40];
-		char buf[10];
-
-		_sprintf(date_string, "%d", tmp_date.year);
-		_strcat(date_string, "-");
-		_sprintf(buf, "%d", tmp_date.month);
-		_strcat(date_string, buf);
-		_strcat(date_string, "-");
-		_sprintf(buf, "%d", tmp_date.day);
-		_strcat(date_string, buf);
-		_strcat(date_string, " ");
-		_sprintf(buf, "%.2d", tmp_date.hour);
-		_strcat(date_string, buf);
-		_strcat(date_string, ":");
-		_sprintf(buf, "%.2d", tmp_date.min);
-		_strcat(date_string, buf);
-		_strcat(date_string, ":");
-		_sprintf(buf, "%.2d", tmp_date.sec);
-		_strcat(date_string, buf);
-
-		set_fg_color(all_events.array_of_events[i].color);
-		draw_filled_rect(4, square_y_pos, 4 + 4, square_y_pos + 4);
-		set_fg_color(COLOR_WHITE);
-
-		text_out(date_string, 13, date_pos);
-		text_out(all_events.array_of_events[i].name, 15, event_text_pos);
-		draw_horizontal_line(upper_pos_item + VERT_SPACE_FOR_EVENT_IN_LIST - 1, 0, VIDEO_X);
-	}
-
-	repaint_screen();
-}
 
 #define ONE_DAY 86400
 #define ONE_HOUR 3600
@@ -864,7 +890,7 @@ void draw_calendar(struct calend_ *calend_p)
 	}
 	else if (calend_p->calendar_screen_view == CALENDAR_VIEW_LIST)
 	{
-		draw_list_of_future_events(0);
+		draw_list_of_future_events(calend_p->event_list_page);
 	}
 	else
 	{
