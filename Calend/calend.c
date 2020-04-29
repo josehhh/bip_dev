@@ -759,7 +759,7 @@ int hash(const char *str)
 	int c;
 	while (c = *str++)
 		hash = ((hash << 5) + hash) + c;
-	return hash;
+	return abs(hash);
 }
 
 struct event_ create_event(int unix_time_start, int unix_time_end, char *event_name, char *event_type)
@@ -767,8 +767,9 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 	struct event_ res;
 
 	#define n_colors 6
-	int colors[n_colors] = {COLOR_BLUE, COLOR_AQUA, COLOR_GREEN, COLOR_PURPLE, COLOR_RED, COLOR_SH_YELLOW};
-	int color = colors[hash(event_type) % n_colors];
+	int colors[n_colors] = {COLOR_BLUE, COLOR_AQUA, COLOR_GREEN, COLOR_PURPLE, COLOR_RED, COLOR_YELLOW};
+	int color_index = hash(event_type) % n_colors;
+	int color = colors[color_index];
 
 	res.color = color;
 	res.start = unix_time_start;

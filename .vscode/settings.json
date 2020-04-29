@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "libbip.h": "c"
+        "libbip.h": "c",
+        "time.h": "c"
     }
 }
