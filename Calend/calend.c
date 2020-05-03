@@ -18,9 +18,17 @@ v.1.1
 
 #include <libbip.h>
 #include "calend.h"
-#include <time.h>
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
+
+
+
+void swap_event_(struct event_ *event1, struct event_ *event2)
+{
+	struct event_ tmp = *event2;
+	*event2 = *event1;
+	*event1 = tmp;
+}
 
 //	calendar screen menu structure
 struct regmenu_ menu_calend_screen = {
@@ -447,7 +455,8 @@ void draw_list_of_future_events(int page_number)
 			break;
 		}
 
-		struct datetime_ tmp_date = from_unix_time_to_datetime_(all_events.array_of_events[item_index].start);
+		struct datetime_ tmp_date;
+		from_unix_time_to_datetime_(all_events.array_of_events[item_index].start, &tmp_date);
 
 		int upper_pos_item = VERT_SPACE_FOR_EVENT_IN_LIST * i;
 		int date_pos = upper_pos_item + 0;
@@ -484,6 +493,7 @@ void draw_list_of_future_events(int page_number)
 	}
 
 	repaint_screen();
+	//sort_events_by_start_time_and_discard_expired_events();
 }
 
 
@@ -659,35 +669,34 @@ int dispatch_calend_screen(void *param)
 	return result;
 };
 
-struct datetime_ from_unix_time_to_datetime_(int unix_time)
+void from_unix_time_to_datetime_(int unix_time, struct datetime_ * res)
 {
 
-	struct datetime_ res;
 
-	uint32_t t = unix_time + 37;
+	int t = unix_time + 37;
 
 	//Retrieve hours, minutes and seconds
-	res.sec = t % 60;
+	(*res).sec = t % 60;
 	t /= 60;
-	res.min = t % 60;
+	(*res).min = t % 60;
 	t /= 60;
-	res.hour = t % 24;
+	(*res).hour = t % 24;
 	t /= 24;
 
-	uint32_t a;
-	uint32_t b;
-	uint32_t c;
-	uint32_t d;
-	uint32_t e;
-	uint32_t f;
+	int a;
+	int b;
+	int c;
+	int d;
+	int e;
+	int f;
 
 	//Negative Unix time values are not supported
 	if (t < 1)
 		t = 0;
 
 	//Convert Unix time to date
-	a = (uint32_t)((4 * t + 102032) / 146097 + 15);
-	b = (uint32_t)(t + 2442113 + a - (a / 4));
+	a = (int)((4 * t + 102032) / 146097 + 15);
+	b = (int)(t + 2442113 + a - (a / 4));
 	c = (20 * b - 2442) / 7305;
 	d = b - 365 * c - (c / 4);
 	e = d * 1000 / 30601;
@@ -706,44 +715,159 @@ struct datetime_ from_unix_time_to_datetime_(int unix_time)
 	}
 
 	//Retrieve year, month and day
-	res.year = c;
-	res.month = e;
-	res.day = f;
+	(*res).year = c;
+	(*res).month = e;
+	(*res).day = f;
 
-	return res;
+}
 
-	// char buf[180];
-	// char tmp_buf[30];
 
-	// _sprintf(buf, "%d", res.year);
-	// _strcat(buf, "-");
-	// _sprintf(tmp_buf, "%d", res.month);
-	// _strcat(buf, tmp_buf);
-	// _strcat(buf, "-");
-	// _sprintf(tmp_buf, "%d", res.day);
-	// _strcat(buf, tmp_buf);
-	// _strcat(buf, " ");
-	// _sprintf(tmp_buf, "%.2d", res.hour);
-	// _strcat(buf, tmp_buf);
-	// _strcat(buf, ":");
-	// _sprintf(tmp_buf, "%.2d", res.min);
-	// _strcat(buf, tmp_buf);
-	// _strcat(buf, ":");
-	// _sprintf(tmp_buf, "%.2d", res.sec);
-	// _strcat(buf, tmp_buf);
-	// _strcpy(debug_chars, buf);
 
-	// _debug_print();
+// Return 1 if datetime2 goes after datetime 1, else, return -1. Return 0 if datetime1 = datetime2
+int compare_datetimes(struct datetime_ *datetime1, struct datetime_ *datetime2)
+{
+	if (datetime2->year > datetime1->year)
+	{
+		return 1;
+	}
+	else if(datetime2->year < datetime1->year)
+	{
+		return -1;
+	}
+
+	if (datetime2->month > datetime1->month)
+	{
+		return 1;
+	}
+	else if(datetime2->month < datetime1->month)
+	{
+		return -1;
+	}
+
+	if (datetime2->day > datetime1->day)
+	{
+		return 1;
+	}
+	else if(datetime2->day < datetime1->day)
+	{
+		return -1;
+	}
+
+	if (datetime2->hour > datetime1->hour)
+	{
+		return 1;
+	}
+	else if(datetime2->hour < datetime1->hour)
+	{
+		return -1;
+	}
+
+	if (datetime2->min > datetime1->min)
+	{
+		return 1;
+	}
+
+	else if(datetime2->min < datetime1->min)
+	{
+		return -1;
+	}
+
+	if (datetime2->sec > datetime1->sec)
+	{
+		return 1;
+	}
+
+	else if(datetime2->sec < datetime1->sec)
+	{
+		return -1;
+	}
+
+	return 0;
+
+}
+
+int from_datetime_to_unix_time(struct datetime_ *datetime)
+{
+
+	int before_unix_time = 1546304401;
+	int after_unix_time = 2147483645; // this triggers an overflow error
+
+	struct datetime_ pivot_time;
+	int pivot_time_unix;
+
+	int found_unix_time = false;
+
+	int counter = 0;
+	while (found_unix_time == false && counter < 1000)
+	{
+		counter++;
+		pivot_time_unix = (before_unix_time/2 + after_unix_time/2) ;
+		if (before_unix_time % 2 == 1 && after_unix_time % 2 == 1)
+		{
+			pivot_time_unix++;
+		}
+		
+		//_debug_print_integer(pivot_time_unix);
+
+		if(after_unix_time - before_unix_time == 1)
+		{
+			from_unix_time_to_datetime_(pivot_time_unix, &pivot_time);
+			int comp_res_when_diff_is_1 = compare_datetimes(datetime, &pivot_time);
+			if (comp_res_when_diff_is_1 == 0)
+			{
+				return pivot_time_unix;
+			}
+			pivot_time_unix++;
+			
+		}
+
+		from_unix_time_to_datetime_(pivot_time_unix, &pivot_time);
+		int comp_res = compare_datetimes(datetime, &pivot_time);
+
+		switch (comp_res)
+		{
+		case 0:
+			return pivot_time_unix;
+			break;
+
+		case 1:
+			after_unix_time = pivot_time_unix;
+			break;
+
+		case -1:
+			before_unix_time = pivot_time_unix;
+			break;
+
+		default:
+			_debug_print("Error, to_unix_time, default case");
+			break;
+		}
+
+	}
+	//_debug_print_integer(pivot_time_unix);
+	_debug_print("Error,to_unix_time (max counter reached)");
+	return 1;
+}
+
+
+void _debug_print_integer(int number)
+{
+	char buf[20];
+	_sprintf(buf, "%d", number);
+	_debug_print(buf);
 }
 
 void _debug_print(char *str)
 {
-	repaint_screen_lines(1, 176);
-	set_bg_color(COLOR_BLACK);
-	set_fg_color(COLOR_WHITE);
-	draw_filled_rect_bg(5, 50, 100, 170);
-	text_out_center(str, 75, 75);
-	repaint_screen_lines(1, 176);
+	// repaint_screen_lines(1, 176);
+	// set_bg_color(COLOR_BLACK);
+	// set_fg_color(COLOR_WHITE);
+	// draw_filled_rect_bg(5, 50, 100, 170);
+	// text_out_center(str, 75, 75);
+	// repaint_screen_lines(1, 176);
+	#ifdef DEBUG_LOG
+	log_printf(5, "%s", str);
+	#endif
 }
 
 void _strcat(char *destination, const char *source)
@@ -762,7 +886,7 @@ int hash(const char *str)
 	return abs(hash);
 }
 
-struct event_ create_event(int unix_time_start, int unix_time_end, char *event_name, char *event_type)
+struct event_ create_event(int unix_time_start, int unix_time_duration, char *event_name, char *event_type)
 {
 	struct event_ res;
 
@@ -773,7 +897,7 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 
 	res.color = color;
 	res.start = unix_time_start;
-	res.end = unix_time_end;
+	res.end = unix_time_start + unix_time_duration;
 
 	_strcpy(res.name, event_name);
 	_strcpy(res.type_of_event, event_type);
@@ -785,7 +909,8 @@ struct event_ create_event(int unix_time_start, int unix_time_end, char *event_n
 
 void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned int year)
 {
-	struct datetime_ start_datetime = from_unix_time_to_datetime_(ev.start);
+	struct datetime_  start_datetime;
+	from_unix_time_to_datetime_(ev.start, &start_datetime);
 
 	int pos_x = -1;
 	int pos_y = -1;
@@ -871,16 +996,70 @@ void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned i
 #define ONE_HOUR 3600
 void read_all_events()
 {
-	all_events.array_of_events[0] = create_event(1584442731 - ONE_DAY, 1584444731 - ONE_DAY, "Meeting with boss", "work");
-	all_events.array_of_events[1] = create_event(1584442731 + ONE_HOUR, 1584444731 + ONE_HOUR, "Swimming Pool", "freestime");
-	all_events.array_of_events[2] = create_event(1584442731 + 2 * ONE_DAY + ONE_HOUR * 3, 1584444731 + 2 * ONE_DAY + ONE_HOUR * 3, "Bowling with Jimbo", "free_time");
-	all_events.array_of_events[3] = create_event(1584442731 + 4 * ONE_DAY + ONE_HOUR * 7, 1584444731 + 4 * ONE_DAY + ONE_HOUR * 7, "Beers with sam", "freefstime");
-	all_events.array_of_events[4] = create_event(1585863092 - ONE_DAY, 1585863092 - ONE_DAY + ONE_HOUR, "Jhons birthday party", "family");
-	all_events.array_of_events[5] = create_event(1585863092 - 2 * ONE_DAY, 1585863092 - 2 * ONE_DAY + ONE_HOUR, "Jhons funeral", "famil2");
-	all_events.array_of_events[6] = create_event(1585863092, 1585863092, "Jhons zombiefication", "famil4");
+	all_events.array_of_events[0] = create_event(1588350814 - ONE_HOUR, ONE_HOUR, "First", "work");
+	all_events.array_of_events[6] = create_event(1588350814 - ONE_DAY*2, ONE_HOUR, "Second", "work");
+	all_events.array_of_events[2] = create_event(1588350814 + ONE_DAY*3, ONE_HOUR, "Third", "birthday");
+	all_events.array_of_events[3] = create_event(1588350814 + ONE_DAY*4, ONE_HOUR, "Fourth", "birthday");
+	all_events.array_of_events[4] = create_event(1588350814 + ONE_DAY*5, ONE_HOUR, "Fifth", "social_life");
+	all_events.array_of_events[5] = create_event(1588350814 + ONE_DAY*6, ONE_HOUR, "Sixth", "social_life");
+	all_events.array_of_events[1] = create_event(1588350814 + ONE_DAY*7, ONE_HOUR, "Seventh", "other");
 
 	all_events.number_of_events = 7;
+
+	discard_finished_events_and_sort(&all_events);
 }
+
+void BubbleSort_all_events(struct event_ *array_of_events, int n_of_events)
+{
+	int sorted = false;
+	int i = 0;
+	while ((i < n_of_events - 1) && sorted == false)
+	{
+		_debug_print("---\n");
+
+		for (int i = 0; i < n_of_events; i++)
+		{
+			_debug_print(array_of_events[i].name);
+			_debug_print("\n");
+		}
+
+		sorted = true;
+		for (int j = 0; j < n_of_events - i - 1; j++)
+		{
+			if (array_of_events[j].start > array_of_events[j + 1].start) // For decreasing order use <
+			{
+				sorted = false;
+				swap_event_(&array_of_events[j], &array_of_events[j + 1]);
+			}
+		}
+		i++;
+	}
+}
+
+void discard_finished_events_and_sort(struct all_events_ * all_events_struct)
+{
+
+	struct datetime_ now;
+	get_current_date_time(&now);
+
+	int current_time_unix = from_datetime_to_unix_time(&now);
+
+	for (int i = 0; i < all_events_struct->number_of_events; i++)
+	{
+		if (all_events_struct->array_of_events[i].end  <= current_time_unix)
+		{
+
+			swap_event_(&all_events_struct->array_of_events[i], &all_events_struct->array_of_events[all_events.number_of_events - 1]);
+			all_events_struct->number_of_events--;
+		}
+	}
+
+	BubbleSort_all_events(all_events_struct->array_of_events, all_events_struct->number_of_events);
+}
+
+
+
+
 
 void draw_calendar(struct calend_ *calend_p)
 {

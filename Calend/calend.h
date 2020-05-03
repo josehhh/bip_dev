@@ -94,6 +94,8 @@ int calendar_screen_view; // CALENDAR_VIEW_MONTHLY or CALENDAR_VIEW_LIST
 int event_list_page;
 };
 
+
+
 #define NUMBER_OF_CALEND_VIEWS 2
 #define CALENDAR_VIEW_MONTHLY 0
 #define CALENDAR_VIEW_LIST 1
@@ -124,14 +126,17 @@ void draw_calendar(struct calend_ *calend_p);
 void draw_month(unsigned int day, unsigned int month, unsigned int year);
 unsigned char wday(unsigned int day,unsigned int month,unsigned int year);
 unsigned char isLeapYear(unsigned int year);
-struct datetime_ from_unix_time_to_datetime_(int unix_time);
+void from_unix_time_to_datetime_(int unix_time, struct datetime_ * datetime);
 struct event_ create_event(int unix_time_start, int unix_time_end, char* event_name,  char* event_type);
 void draw_event_in_monthly_view(struct event_ ev, unsigned int month, unsigned int year);
 void _debug_print();
+void _debug_print_integer(int number);
 void _strcat(char * destination, const char * source );
 void draw_all_events(unsigned int month, unsigned int year);
 void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int year, int* pos_x, int* pos_y);
 void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned int year);
 
+void BubbleSort_all_events(struct event_ *array_of_events, int n_of_events);
+void discard_finished_events_and_sort(struct all_events_ * all_events_struct);
 
 #endif
