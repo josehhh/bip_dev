@@ -19,7 +19,7 @@ v.1.1
 #include <libbip.h>
 #include "calend.h"
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 
 
 
@@ -996,13 +996,17 @@ void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned i
 #define ONE_HOUR 3600
 void read_all_events()
 {
-	all_events.array_of_events[0] = create_event(1588350814 - ONE_HOUR, ONE_HOUR, "First", "work");
-	all_events.array_of_events[6] = create_event(1588350814 - ONE_DAY*2, ONE_HOUR, "Second", "work");
-	all_events.array_of_events[2] = create_event(1588350814 + ONE_DAY*3, ONE_HOUR, "Third", "birthday");
-	all_events.array_of_events[3] = create_event(1588350814 + ONE_DAY*4, ONE_HOUR, "Fourth", "birthday");
-	all_events.array_of_events[4] = create_event(1588350814 + ONE_DAY*5, ONE_HOUR, "Fifth", "social_life");
-	all_events.array_of_events[5] = create_event(1588350814 + ONE_DAY*6, ONE_HOUR, "Sixth", "social_life");
-	all_events.array_of_events[1] = create_event(1588350814 + ONE_DAY*7, ONE_HOUR, "Seventh", "other");
+	struct datetime_ now;
+	get_current_date_time(&now);
+	int NOW_EPOCH = from_datetime_to_unix_time(&now);
+	
+	all_events.array_of_events[0] = create_event(NOW_EPOCH - ONE_HOUR, ONE_HOUR, "First", "work");
+	all_events.array_of_events[6] = create_event(NOW_EPOCH - 3, ONE_HOUR, "Second", "work");
+	all_events.array_of_events[2] = create_event(NOW_EPOCH + ONE_DAY*3, ONE_HOUR, "Third", "birthday");
+	all_events.array_of_events[3] = create_event(NOW_EPOCH + ONE_DAY*4, ONE_HOUR, "Fourth", "birthday");
+	all_events.array_of_events[4] = create_event(NOW_EPOCH + ONE_DAY*5, ONE_HOUR, "Fifth", "social_life");
+	all_events.array_of_events[5] = create_event(NOW_EPOCH + ONE_DAY*6, ONE_HOUR, "Sixth", "social_life");
+	all_events.array_of_events[1] = create_event(NOW_EPOCH + ONE_DAY*7, ONE_HOUR, "Seventh", "other");
 
 	all_events.number_of_events = 7;
 
@@ -1015,13 +1019,7 @@ void BubbleSort_all_events(struct event_ *array_of_events, int n_of_events)
 	int i = 0;
 	while ((i < n_of_events - 1) && sorted == false)
 	{
-		_debug_print("---\n");
 
-		for (int i = 0; i < n_of_events; i++)
-		{
-			_debug_print(array_of_events[i].name);
-			_debug_print("\n");
-		}
 
 		sorted = true;
 		for (int j = 0; j < n_of_events - i - 1; j++)
@@ -1043,6 +1041,9 @@ void discard_finished_events_and_sort(struct all_events_ * all_events_struct)
 	get_current_date_time(&now);
 
 	int current_time_unix = from_datetime_to_unix_time(&now);
+
+	_debug_print("CUrrent epoch: ");
+	_debug_print_integer(current_time_unix);
 
 	for (int i = 0; i < all_events_struct->number_of_events; i++)
 	{
