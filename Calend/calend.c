@@ -22,6 +22,9 @@ v.1.1
 #define DEBUG_LOG
 
 
+#define ONE_DAY 86400
+#define ONE_HOUR 3600
+#define ONE_MINUTE 60
 
 void swap_event_(struct event_ *event1, struct event_ *event2)
 {
@@ -496,7 +499,72 @@ void draw_list_of_future_events(int page_number)
 	//sort_events_by_start_time_and_discard_expired_events();
 }
 
+void get_char_string_from_date_and_duration(int event_unix_time, int event_duration, char* res)
+{
+	int now_unix = get_now_in_unix_time();
+	get_char_string_from_date_and_duration(now_unix, event_unix_time, event_duration, res);
+}
 
+
+
+void _aux_cat_event_duration_from_seconds_to_string(int duration_seconds, char* res)
+{
+	char buf[4];
+	if (duration_seconds < 0)
+	{
+		_strcat(res, "negative duration ");
+	}
+	else if (duration_seconds < ONE_MINUTE)
+	{
+		_strcat(res, "1 min");
+	}
+	else if (duration_seconds < ONE_HOUR)
+	{	
+		int num_mins = duration_seconds / ONE_MINUTE;
+		_sprintf(buf, "%d", num_mins);
+		_strcat(res, buf);
+		_strcat(res, " min");
+	}
+	else if(duration_seconds < ONE_DAY)
+	{	
+		float num_hours = (float) duration_seconds / (float) ONE_HOUR;
+		_strcat(buf, "%0.1f", num_hours);
+		_strcat(res, buf);
+		_strcat(res, " h");
+
+	}
+	else
+	{	
+		float num_days = (float) duration_seconds / (float) ONE_DAY;
+		_strcat(buf, "%0.1f", num_days);
+		_strcat(res, buf);
+		_strcat(res, " days");
+
+	}
+
+}
+
+
+void get_char_string_from_date_and_duration(int now_time_unix, int event_unix_time, int event_duration, char* res)
+{
+	#ifdef DEBUG_LOG
+	if (now_time_unix > event_unix_time + event_duration)
+	{
+		_debug_print("error, event expired in get_char_string_from_date_and_duration() ");
+	}	
+	#endif
+
+	int delta_start = event_unix_time - now_time_unix;
+	if (delta_start <= 0)
+	{
+		_strcat(res, "now, ");
+		int duration_left = (now_time_unix + event_duration) ghuggrei
+	}
+	else if(delta_start < ONE_HOUR )
+	{
+
+	}
+}
 
 int dispatch_calend_screen(void *param)
 {
@@ -977,6 +1045,14 @@ void get_pos_day_in_monthly(unsigned int day, unsigned int month, unsigned int y
 	}
 }
 
+
+int get_now_in_unix_time()
+{
+	struct datetime_ now;
+	get_current_date_time(&now);
+	return from_datetime_to_unix_time(&now);
+}
+
 void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned int year)
 {
 	struct calend_ **calend_p = get_ptr_temp_buf_2(); //	pointer to screen data pointer
@@ -992,14 +1068,10 @@ void draw_all_events_in_monthly(unsigned int day, unsigned int month, unsigned i
 }
 
 
-#define ONE_DAY 86400
-#define ONE_HOUR 3600
 void read_all_events()
 {
-	struct datetime_ now;
-	get_current_date_time(&now);
-	int NOW_EPOCH = from_datetime_to_unix_time(&now);
-	
+	int NOW_EPOCH = get_now_in_unix_time();
+
 	all_events.array_of_events[0] = create_event(NOW_EPOCH - ONE_HOUR, ONE_HOUR, "First", "work");
 	all_events.array_of_events[6] = create_event(NOW_EPOCH - 3, ONE_HOUR, "Second", "work");
 	all_events.array_of_events[2] = create_event(NOW_EPOCH + ONE_DAY*3, ONE_HOUR, "Third", "birthday");
