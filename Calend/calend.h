@@ -130,7 +130,7 @@ void from_unix_time_to_datetime_(int unix_time, struct datetime_ * datetime);
 int from_datetime_to_unix_time(struct datetime_ *datetime);
 int get_now_in_unix_time();
 void get_char_string_from_date_and_duration(int event_unix_time, int event_duration, char* res);
-void get_char_string_from_date_and_duration(int now_unix, int event_unix_time, int event_duration, char* res);
+void get_char_string_from_date_and_duration_with_now_unix(int now_unix, int event_unix_time, int event_duration, char* res);
 
 
 struct event_ create_event(int unix_time_start, int unix_time_end, char* event_name,  char* event_type);

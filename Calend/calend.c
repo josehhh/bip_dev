@@ -19,7 +19,7 @@ v.1.1
 #include <libbip.h>
 #include "calend.h"
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 
 
 #define ONE_DAY 86400
@@ -448,6 +448,8 @@ void draw_list_of_future_events(int page_number)
 	set_bg_color(COLOR_BLACK);
 	set_fg_color(COLOR_WHITE);
 	fill_screen_bg();
+	int now_unix = get_now_in_unix_time();
+
 	for (int i = 0; i < N_EVENTS_PAGE; i++)
 	{
 
@@ -459,32 +461,51 @@ void draw_list_of_future_events(int page_number)
 		}
 
 		struct datetime_ tmp_date;
+		struct datetime_ now_datime;
 		from_unix_time_to_datetime_(all_events.array_of_events[item_index].start, &tmp_date);
+		get_current_date_time(&now_datime);
 
 		int upper_pos_item = VERT_SPACE_FOR_EVENT_IN_LIST * i;
 		int date_pos = upper_pos_item + 0;
 		int square_y_pos = date_pos + 8;
 		int event_text_pos = upper_pos_item + get_text_height() - 1;
 
-		char date_string[40];
-		char buf[10];
+		char date_string[30];
+		_strcpy(date_string, "");
+		char buf[15];
+		_strcpy(buf, "");
 
-		_sprintf(date_string, "%d", tmp_date.year);
-		_strcat(date_string, "-");
-		_sprintf(buf, "%d", tmp_date.month);
-		_strcat(date_string, buf);
-		_strcat(date_string, "-");
-		_sprintf(buf, "%d", tmp_date.day);
-		_strcat(date_string, buf);
-		_strcat(date_string, " ");
-		_sprintf(buf, "%.2d", tmp_date.hour);
-		_strcat(date_string, buf);
-		_strcat(date_string, ":");
-		_sprintf(buf, "%.2d", tmp_date.min);
-		_strcat(date_string, buf);
-		_strcat(date_string, ":");
-		_sprintf(buf, "%.2d", tmp_date.sec);
-		_strcat(date_string, buf);
+		if(abs(now_unix - all_events.array_of_events[item_index].start) < ONE_DAY*2 && (tmp_date.day == now_datime.day + 1))
+		{
+				_strcat(date_string, "tomorrow at ");
+				_sprintf(buf, "%.2d", tmp_date.hour);
+				_strcat(date_string, buf);
+				_strcat(date_string, ":");
+				_sprintf(buf, "%.2d", tmp_date.min);
+				_strcat(date_string, buf);
+				_strcpy(buf, "");
+		}
+		else
+		{
+			get_char_string_from_date_and_duration_with_now_unix(now_unix, all_events.array_of_events[item_index].start, all_events.array_of_events[item_index].end - all_events.array_of_events[item_index].start, date_string);
+		}
+
+		// _sprintf(date_string, "%d", tmp_date.year);
+		// _strcat(date_string, "-");
+		// _sprintf(buf, "%d", tmp_date.month);
+		// _strcat(date_string, buf);
+		// _strcat(date_string, "-");
+		// _sprintf(buf, "%d", tmp_date.day);
+		// _strcat(date_string, buf);
+		// _strcat(date_string, " ");
+		// _sprintf(buf, "%.2d", tmp_date.hour);
+		// _strcat(date_string, buf);
+		// _strcat(date_string, ":");
+		// _sprintf(buf, "%.2d", tmp_date.min);
+		// _strcat(date_string, buf);
+		// _strcat(date_string, ":");
+		// _sprintf(buf, "%.2d", tmp_date.sec);
+		// _strcat(date_string, buf);
 
 		set_fg_color(all_events.array_of_events[item_index].color);
 		draw_filled_rect(4, square_y_pos, 4 + 4, square_y_pos + 4);
@@ -499,12 +520,17 @@ void draw_list_of_future_events(int page_number)
 	//sort_events_by_start_time_and_discard_expired_events();
 }
 
-void get_char_string_from_date_and_duration(int event_unix_time, int event_duration, char* res)
-{
-	int now_unix = get_now_in_unix_time();
-	get_char_string_from_date_and_duration(now_unix, event_unix_time, event_duration, res);
-}
 
+void div_integers_as_floats_to_res_char(int dividend, int divisor, char* res)
+{
+	dividend*=10;
+	int res_int = dividend / divisor;
+	char buf[2];
+	_sprintf(res, "%d", res_int / 10);
+	_sprintf(buf, "%d", res_int % 10);
+	_strcat(res, ".");
+	_strcat(res, buf);
+}
 
 
 void _aux_cat_event_duration_from_seconds_to_string(int duration_seconds, char* res)
@@ -527,16 +553,14 @@ void _aux_cat_event_duration_from_seconds_to_string(int duration_seconds, char* 
 	}
 	else if(duration_seconds < ONE_DAY)
 	{	
-		float num_hours = (float) duration_seconds / (float) ONE_HOUR;
-		_strcat(buf, "%0.1f", num_hours);
+		div_integers_as_floats_to_res_char(duration_seconds, ONE_HOUR, buf);
 		_strcat(res, buf);
 		_strcat(res, " h");
 
 	}
 	else
 	{	
-		float num_days = (float) duration_seconds / (float) ONE_DAY;
-		_strcat(buf, "%0.1f", num_days);
+		div_integers_as_floats_to_res_char(duration_seconds, ONE_DAY, buf);
 		_strcat(res, buf);
 		_strcat(res, " days");
 
@@ -544,25 +568,41 @@ void _aux_cat_event_duration_from_seconds_to_string(int duration_seconds, char* 
 
 }
 
+void get_char_string_from_date_and_duration(int event_unix_time, int event_duration, char* res)
+{
+	int now_unix = get_now_in_unix_time();
+	get_char_string_from_date_and_duration_with_now_unix(now_unix, event_unix_time, event_duration, res);
+}
 
-void get_char_string_from_date_and_duration(int now_time_unix, int event_unix_time, int event_duration, char* res)
+
+
+void get_char_string_from_date_and_duration_with_now_unix(int now_time_unix, int event_unix_time, int event_duration, char* res)
 {
 	#ifdef DEBUG_LOG
+	
+
 	if (now_time_unix > event_unix_time + event_duration)
 	{
 		_debug_print("error, event expired in get_char_string_from_date_and_duration() ");
 	}	
 	#endif
+	
+	char buf[510];
+	_strcpy(buf, "");
 
 	int delta_start = event_unix_time - now_time_unix;
 	if (delta_start <= 0)
 	{
-		_strcat(res, "now, ");
-		int duration_left = (now_time_unix + event_duration) ghuggrei
+		_strcat(res, "now, for ");
+		int duration_left = (event_unix_time + event_duration) - now_time_unix;
+		_aux_cat_event_duration_from_seconds_to_string(duration_left, buf);
+		_strcat(res, buf);
 	}
-	else if(delta_start < ONE_HOUR )
+	else
 	{
-
+		_strcat(res, "in ");
+		_aux_cat_event_duration_from_seconds_to_string(event_unix_time - now_time_unix, buf);
+		_strcat(res, buf);
 	}
 }
 
@@ -1072,13 +1112,13 @@ void read_all_events()
 {
 	int NOW_EPOCH = get_now_in_unix_time();
 
-	all_events.array_of_events[0] = create_event(NOW_EPOCH - ONE_HOUR, ONE_HOUR, "First", "work");
-	all_events.array_of_events[6] = create_event(NOW_EPOCH - 3, ONE_HOUR, "Second", "work");
-	all_events.array_of_events[2] = create_event(NOW_EPOCH + ONE_DAY*3, ONE_HOUR, "Third", "birthday");
-	all_events.array_of_events[3] = create_event(NOW_EPOCH + ONE_DAY*4, ONE_HOUR, "Fourth", "birthday");
-	all_events.array_of_events[4] = create_event(NOW_EPOCH + ONE_DAY*5, ONE_HOUR, "Fifth", "social_life");
-	all_events.array_of_events[5] = create_event(NOW_EPOCH + ONE_DAY*6, ONE_HOUR, "Sixth", "social_life");
-	all_events.array_of_events[1] = create_event(NOW_EPOCH + ONE_DAY*7, ONE_HOUR, "Seventh", "other");
+	all_events.array_of_events[0] = create_event(NOW_EPOCH - ONE_HOUR, ONE_HOUR, "Pick up poster", "work");
+	all_events.array_of_events[6] = create_event(NOW_EPOCH - 3, ONE_HOUR, "Meeting with boss", "work");
+	all_events.array_of_events[2] = create_event(NOW_EPOCH + ONE_DAY*6, ONE_HOUR, "Jhon's BD", "birthday");
+	all_events.array_of_events[3] = create_event(NOW_EPOCH + ONE_DAY*4, ONE_HOUR, "Laura's BD", "birthday");
+	all_events.array_of_events[4] = create_event(NOW_EPOCH + ONE_DAY*5, ONE_HOUR, "Bar with friends", "social_life");
+	all_events.array_of_events[5] = create_event(NOW_EPOCH + ONE_DAY, ONE_HOUR, "Hockey with Donald", "social_life");
+	all_events.array_of_events[1] = create_event(NOW_EPOCH + ONE_DAY*7, ONE_HOUR, "Iron the clothes", "other_stuff");
 
 	all_events.number_of_events = 7;
 
