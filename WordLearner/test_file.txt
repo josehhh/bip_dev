@@ -1,0 +1,9 @@
+const char *words[] = { 
+"was","what", 
+"wie","how", 
+"wer","who", 
+"woher","from where", 
+"wie heißt du?","how are you called?", 
+"wie geht es dir?","how are you?", 
+ }; 
+const int N_WORDS=6 ; 

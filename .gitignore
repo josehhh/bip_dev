@@ -1,4 +1,5 @@
 out.res
+out_light.res
 *.elf
 *.map
 *.o
