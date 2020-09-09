@@ -1,10 +1,11 @@
 cd template
 call .\build.bat
 cd ..
-cd Calend
+cd WordLearner
 call .\build.bat
 cd ..
-cd WordLearner
+pause
+cd Calend
 call .\build.bat
 cd ..
 .\ResPack -a out_light.res .\original_res\Mili_chaohu_11205_lite_packed.res .\template\template.elf .\Calend\Calend.elf .\WordLearner\WordLearner.elf

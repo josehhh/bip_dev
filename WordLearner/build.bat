@@ -1,3 +1,4 @@
+call create_words_file.bat
 @echo off
 @setlocal EnableDelayedExpansion enableextensions
 @cls

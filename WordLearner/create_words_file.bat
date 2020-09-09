@@ -1,4 +1,4 @@
-ECHO const char *words[] = { > "test_file.txt"
+ECHO const char *words[] = { > "content.words"
 
 
 ::Get number of lines in csv
@@ -12,7 +12,7 @@ setlocal enabledelayedexpansion
 
 set var1=0
 
-for /F "tokens=1* delims=," %%a in (csv_of_words.csv) do (
+for /F "tokens=1* delims=;" %%a in (csv_of_words.csv) do (
     set var2=0
     set array[!var1!][!var2!]=%%a
     set /a var2+=1
@@ -26,22 +26,22 @@ echo off
 
 set /a Lines-=1
 FOR /L %%X IN (0,1,%Lines%) DO (
-   echo "!array[%%X][0]!","!array[%%X][1]!", >> "test_file.txt"
+   echo "!array[%%X][0]!","!array[%%X][1]!", >> "content.words"
 )
 set /a Lines+=1
 endlocal
 
 
 
-ECHO  }; >> "test_file.txt"
+ECHO  }; >> "content.words"
 
-echo|set /p="const int N_WORDS=" >> "test_file.txt"
-
-
+echo|set /p="const int N_WORDS=" >> "content.words"
 
 
 
 
-echo|set /p=%Lines% >> "test_file.txt"
 
-ECHO ; >> "test_file.txt"
+
+echo|set /p=%Lines% >> "content.words"
+
+ECHO ; >> "content.words"

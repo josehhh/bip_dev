@@ -1,10 +1,10 @@
-const char *words[] = {
-"was","what",
-"wie","how",
-"wer","who"
-"woher","from where",
-"wie heißt du?","how are you called?",
-"wie geht es dir?","how are you?",
-};
-
-const int N_WORDS=6;
+const char *words[] = { 
+"wer sind Sie?","quien es usted?", 
+"woher","from where", 
+"wie heißt du?","how are you called?", 
+"wie geht es dir?","como estas?", 
+"wie geht es Ihnen?","como esta usted?", 
+"Sehr gut danke","muy bien gracias", 
+"wie bitte?","how please? (repeat plz)", 
+ }; 
+const int N_WORDS=7 ; 

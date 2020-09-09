@@ -10,6 +10,17 @@
 #include "WordLearner.h"
 #include "content.words"
 
+#define MODE_GUESS_MEANING 0
+#define MODE_GUESS_FROM_MEANING 1
+#define N_MODES 2
+
+
+void reset_status(int * word_index)
+{
+	(*word_index) = _rand() / N_WORDS;
+	(*word_index) = 0;
+}
+
 
 //	screen menu structure - each screen has its own
 struct regmenu_ screen_data = {
@@ -37,7 +48,6 @@ Elf_proc_* proc;
 // check the source at the procedure launch
 if ( (param0 == *app_data_p) && get_var_menu_overlay()){ // return from the overlay screen (incoming call, notification, alarm, target, etc.)
 
-	word_index = 0;
 
 	app_data = *app_data_p;					//	the data pointer must be saved for the deletion 
 											//	release memory function reg_menu
@@ -49,11 +59,11 @@ if ( (param0 == *app_data_p) && get_var_menu_overlay()){ // return from the over
 	*app_data_p = app_data;						//	restore the data pointer after the reg_menu function
 	
 	//   here we perform actions when returning from the overlay screen: restore data, etc.
-	
+	reset_status(&app_data->word_index);
+
 	
 } else { // if the function is started for the first time i.e. from the menu 
 
-	word_index = 0;
 
 	// create a screen (register in the system) 
 	reg_menu(&screen_data, 0);
@@ -78,12 +88,13 @@ if ( (param0 == *app_data_p) && get_var_menu_overlay()){ // return from the over
 	
 	app_data->col=0;
 	app_data->counter=0;
-	
+	reset_status(&app_data->word_index);
+
 }
 
 // here we do the interface drawing, there is no need to update (move to video memory) the screen
 
-draw_screen(app_data->col, 0);
+draw_screen(app_data->word_index);
 
 // if necessary, set the call timer screen_job in ms
 set_update_period(1, 5000);
@@ -106,7 +117,7 @@ struct app_data_ *	app_data = *app_data_p;				//	pointer to screen data
 // rendering the interface, update (transfer to video memory) the screen
 
 app_data->col = (app_data->col+1)%COLORS_COUNT;
-draw_screen(app_data->col, app_data->counter);
+next_state(&app_data->row_index, &app_data->word_index);
 
 // transfer screen lines that have been redrawn to video memory
 repaint_screen_lines(0, 176);
@@ -114,6 +125,25 @@ repaint_screen_lines(0, 176);
 // if necessary, set the screen_job call timer again
 set_update_period(1, 5000);
 }
+
+void next_state(int *row_index, int *word_index)
+{
+	int r;
+	(*row_index)++;
+	if ((*word_index) == 2)
+	{
+		(*word_index) = 0;
+	}
+
+	r = (*word_index);
+	while (r == (*word_index))
+		{
+			r = _rand() % N_WORDS;
+		}
+		(*word_index) = r;
+}
+
+
 
 int dispatch_screen (void *param){
 struct app_data_** 	app_data_p = get_ptr_temp_buf_2(); 	//	pointer to a pointer to screen data 
@@ -124,38 +154,36 @@ struct app_data_ *	app_data = *app_data_p;				//	pointer to screen data
 struct gesture_ *gest = param;
 int result = 0;
 
+
+
+
+
 switch (gest->gesture){
 	case GESTURE_CLICK: {			
-			int r;
-			row_index++;
-			if (row_index == 2)
-			{
-				row_index = 0;
-				r = word_index;
-				
-				while (r == word_index)
-				{
-					r = _rand()  % N_WORDS;				
-				}
-				word_index = r;
-			}
-
+			next_state(&app_data->row_index, &app_data->word_index);
 			break;
 		};
 		case GESTURE_SWIPE_RIGHT: {	//	swipe to the right
+
+			
+
 			// usually this is the exit from the application
 			// show_menu_animate(app_data->ret_f, (unsigned int)show_screen, ANIMATE_RIGHT);	
 			break;
 		};
 		case GESTURE_SWIPE_LEFT: {	// swipe to the left
+
+			
 			// actions when swiping left	
 			break;
 		};
 		case GESTURE_SWIPE_UP: {	// swipe up
+			next_state(&app_data->row_index, &app_data->word_index);
 			// actions when swiping up
 			break;
 		};
 		case GESTURE_SWIPE_DOWN: {	// swipe down
+			next_state(&app_data->row_index, &app_data->word_index);
 			// actions when swiping down
 			break;
 		};		
@@ -165,27 +193,32 @@ switch (gest->gesture){
 		};		
 		
 	}
-	draw_screen();
+	draw_screen(app_data->word_index);
 
 	return result;
 };
 
+
+
+
+
+
+
+
+
+
+
 // custom function
-void draw_screen(){
+void draw_screen(int word_index){
 
 set_bg_color(COLOR_BLACK);
 set_fg_color(COLOR_WHITE);
 fill_screen_bg();
 
-
 text_out_center(words[word_index*2], VIDEO_X / 2, VIDEO_Y / 4);
-
 draw_horizontal_line(VIDEO_Y / 2, 0, VIDEO_X);
+text_out_center(words[word_index*2+1], VIDEO_X / 2, VIDEO_Y * 3 / 4);	
 
-if (row_index == 1)
-{
-	text_out_center(words[word_index*2+1], VIDEO_X / 2, VIDEO_Y * 3 / 4);	
-}
 
 
 repaint_screen_lines(0, 176);
